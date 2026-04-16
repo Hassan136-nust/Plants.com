@@ -2,7 +2,7 @@
 
 # 🌿 Zia Nursery
 
-### A full-stack plant e-commerce website
+### A full-stack plant e-commerce web app
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-zia--nursery.vercel.app-4ade80?style=for-the-badge&logo=vercel&logoColor=white)](https://zia-nursery.vercel.app)
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
