@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import CartDrawer from './CartDrawer';
+import AuthModal from './AuthModal';
+import { useAuth } from '../context/AuthContext';
 
 export default function Layout({ children }) {
     const [particles, setParticles] = useState([]);
+    const { showAuthModal, closeAuth, user } = useAuth();
 
     useEffect(() => {
         const generated = Array.from({ length: 8 }).map((_, i) => ({
@@ -39,6 +43,15 @@ export default function Layout({ children }) {
             <main>{children}</main>
 
             <Footer />
+
+            <CartDrawer />
+
+            {showAuthModal && (
+                <AuthModal
+                    actionLabel="continue"
+                    onClose={closeAuth}
+                />
+            )}
         </>
     );
 }

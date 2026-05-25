@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { TESTIMONIALS, LeafCheckIcon, EcoGlobalIcon, AwardCareIcon, ServiceConsultationIcon, ServiceLandscapeIcon, ServiceWaterIcon, DirectionArrow } from '../data/constants';
 import { useState, useEffect } from 'react';
+import PlantCarousel from '../components/PlantCarousel';
 
 export default function HomePage() {
     const [activeTestimonial, setActiveTestimonial] = useState(0);
@@ -140,6 +141,9 @@ export default function HomePage() {
                     </div>
                 </div>
             </section>
+
+            {/* 3D PLANT SHOWCASE CAROUSEL */}
+            <PlantCarousel />
 
             {/* TESTIMONIAL CAROUSEL */}
             <section className="testimonials" id="testimonials">

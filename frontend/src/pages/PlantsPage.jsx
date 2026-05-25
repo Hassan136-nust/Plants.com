@@ -1,16 +1,25 @@
 import React, { useState } from 'react';
 import { PLANTS_DATA, PlusSymbol } from '../data/constants';
+import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function PlantsPage() {
     const [activeTab, setActiveTab] = useState('all');
-    const [toast, setToast] = useState({ show: false, msg: '' });
-
-    const triggerToast = (msg) => {
-        setToast({ show: true, msg });
-        setTimeout(() => setToast({ show: false, msg: '' }), 3500);
-    };
+    const [toast, setToast] = useState({ show: false, msg: '', success: true });
+    const { user } = useAuth();
+    const { addToCart } = useCart();
 
     const filtered = activeTab === 'all' ? PLANTS_DATA : PLANTS_DATA.filter(p => p.category === activeTab);
+
+    const showToast = (msg, success = true) => {
+        setToast({ show: true, msg, success });
+        setTimeout(() => setToast(t => ({ ...t, show: false })), 3500);
+    };
+
+    const handleAddToCart = (plant) => {
+        addToCart(plant);
+        showToast(`✅ ${plant.name} added to cart!`);
+    };
 
     return (
         <>
@@ -22,6 +31,11 @@ export default function PlantsPage() {
                     <p className="section-desc" style={{ maxWidth: '580px', margin: '0 auto' }}>
                         Hand-picked rarities and beloved classics — from tropical giants to delicate succulents.
                     </p>
+                    {user && (
+                        <p style={{ marginTop: '14px', fontFamily: 'var(--font-sans)', fontSize: '13px', color: '#4ade80' }}>
+                            Welcome back, <strong>{user.name}</strong> 🌿
+                        </p>
+                    )}
                 </div>
             </section>
 
@@ -53,7 +67,11 @@ export default function PlantsPage() {
                                     <p className="plant-card-science">{plant.scientificName}</p>
                                     <div className="plant-card-bottom">
                                         <span className="plant-card-price">{plant.price}</span>
-                                        <button className="plant-card-btn" onClick={() => triggerToast(`Added ${plant.name} to Cart`)}>
+                                        <button
+                                            className="plant-card-btn"
+                                            title="Add to Cart"
+                                            onClick={() => handleAddToCart(plant)}
+                                        >
                                             <PlusSymbol />
                                         </button>
                                     </div>
@@ -65,10 +83,12 @@ export default function PlantsPage() {
             </section>
 
             {/* TOAST */}
-            <div className={`toast ${toast.show ? 'show' : ''}`}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
-                </svg>
+            <div className={`toast ${toast.show ? 'show' : ''}`} style={{
+                background: toast.success
+                    ? 'linear-gradient(135deg, var(--primary) 0%, #16402e 100%)'
+                    : 'linear-gradient(135deg, #3b1414 0%, #1e0a0a 100%)',
+                borderColor: toast.success ? 'var(--accent)' : 'rgba(239,68,68,0.4)',
+            }}>
                 {toast.msg}
             </div>
         </>
