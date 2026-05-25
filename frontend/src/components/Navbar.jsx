@@ -37,7 +37,7 @@ export default function Navbar() {
                     </div>
                 </Link>
 
-                <div className={`nav-links ${mobileMenuOpen ? 'open' : ''}`}>
+                <div className={`nav-links ${mobileMenuOpen ? 'active' : ''}`}>
                     <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>Home</Link>
                     <Link to="/about" className={`nav-link ${isActive('/about') ? 'active' : ''}`}>About</Link>
                     <Link to="/plants" className={`nav-link ${isActive('/plants') ? 'active' : ''}`}>Plants</Link>
