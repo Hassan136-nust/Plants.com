@@ -145,7 +145,7 @@ export default function AdminPage() {
                                             {order.address}, {order.city} {order.zipCode}<br />
                                             Phone: {order.phone}
                                         </td>
-                                        <td style={{ padding: '20px 12px', color: '#f8db7d' }}>${order.totalAmount}</td>
+                                        <td style={{ padding: '20px 12px', color: '#f8db7d' }}>Rs. {order.totalAmount}</td>
                                         <td style={{ padding: '20px 12px' }}>
                                             <a href={`http://localhost:5000${order.receiptUrl}`} target="_blank" rel="noreferrer" style={{ color: '#4ade80', textDecoration: 'none' }}>
                                                 View Pic
@@ -175,8 +175,18 @@ export default function AdminPage() {
                         <form onSubmit={handleAddPlant} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                             <input className="contact-input" placeholder="Display Name (e.g. Snake Plant)" required value={newPlant.name} onChange={e => setNewPlant({ ...newPlant, name: e.target.value })} />
                             <input className="contact-input" placeholder="Scientific Name" required value={newPlant.scientificName} onChange={e => setNewPlant({ ...newPlant, scientificName: e.target.value })} />
-                            <input className="contact-input" placeholder="Price (e.g. $30.00)" required value={newPlant.price} onChange={e => setNewPlant({ ...newPlant, price: e.target.value })} />
-                            <input className="contact-input" placeholder="Category (e.g. Indoor)" required value={newPlant.category} onChange={e => setNewPlant({ ...newPlant, category: e.target.value })} />
+                            <input className="contact-input" placeholder="Price (e.g. Rs. 30.00)" required value={newPlant.price} onChange={e => setNewPlant({ ...newPlant, price: e.target.value })} />
+                            <input className="contact-input" placeholder="Category (e.g. Indoor)" required value={newPlant.category} onChange={e => setNewPlant({ ...newPlant, category: e.target.value })} list="category-options" />
+                            <datalist id="category-options">
+                                <option value="Indoor" />
+                                <option value="Low Light" />
+                                <option value="Flowering" />
+                                <option value="Succulent" />
+                                <option value="Tree" />
+                                <option value="Hanging" />
+                                <option value="Vine" />
+                                <option value="Outdoor" />
+                            </datalist>
 
                             <label style={{ color: '#fff', fontSize: '14px', marginTop: '8px' }}>
                                 <input type="checkbox" checked={newPlant.isCarousel} onChange={e => setNewPlant({ ...newPlant, isCarousel: e.target.checked })} style={{ marginRight: '8px' }} />

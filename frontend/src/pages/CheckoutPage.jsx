@@ -116,8 +116,8 @@ export default function CheckoutPage() {
                         <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', padding: '24px', borderRadius: '16px', marginTop: '16px' }}>
                             <h4 style={{ color: '#4ade80', marginBottom: '16px', fontSize: '18px' }}>Payment Instructions</h4>
                             <p style={{ color: '#fff', fontSize: '14px', lineHeight: 1.6, opacity: 0.9 }}>
-                                Please pay <strong style={{ color: '#f8db7d' }}>70% advance (${advanceAmount})</strong> to confirm your order.
-                                The remaining 30% (${deliveryAmount}) will be collected on delivery.
+                                Please pay <strong style={{ color: '#f8db7d' }}>70% advance (Rs. {advanceAmount})</strong> to confirm your order.
+                                The remaining 30% (Rs. {deliveryAmount}) will be collected on delivery.
                             </p>
                             <div style={{ padding: '16px', background: 'rgba(74, 222, 128, 0.1)', borderRadius: '12px', marginTop: '16px', border: '1px dashed rgba(74,222,128,0.3)' }}>
                                 <p style={{ color: '#fff', fontSize: '14px', margin: '0 0 8px' }}>Send funds via Easypaisa or Jazzcash to:</p>
@@ -155,14 +155,14 @@ export default function CheckoutPage() {
                                     <span style={{ opacity: 0.6 }}>{item.quantity}x</span>
                                     <span>{item.plant.name}</span>
                                 </div>
-                                <span style={{ color: '#f8db7d' }}>${(parseFloat(item.plant.price.replace(/[^0-9.]/g, '')) * item.quantity).toFixed(2)}</span>
+                                <span style={{ color: '#f8db7d' }}>Rs. {(parseFloat(item.plant.price.replace(/[^0-9.]/g, '')) * item.quantity).toFixed(2)}</span>
                             </div>
                         ))}
                     </div>
                     <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', color: '#fff' }}>
                             <span style={{ opacity: 0.6 }}>Subtotal ({itemsCount} items)</span>
-                            <span>${subtotal.toFixed(2)}</span>
+                            <span>Rs. {subtotal.toFixed(2)}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', color: '#fff' }}>
                             <span style={{ opacity: 0.6 }}>Shipping</span>
