@@ -47,10 +47,18 @@ export default function Navbar() {
                 <div className="btn-nav-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                     {/* User Auth Section */}
                     {user ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', display: window.innerWidth > 768 ? 'flex' : 'none' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                             <span style={{ color: '#fff', fontSize: '13px', fontFamily: 'var(--font-sans)', opacity: 0.8 }}>
                                 Hi, {user.name.split(' ')[0]}
                             </span>
+                            {user.role === 'admin' && (
+                                <Link
+                                    to="/admin"
+                                    style={{ background: '#f8db7d', color: '#000', border: 'none', padding: '6px 14px', borderRadius: '50px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', textDecoration: 'none' }}
+                                >
+                                    Admin Panel
+                                </Link>
+                            )}
                             <button
                                 onClick={logout}
                                 style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', padding: '6px 14px', borderRadius: '50px', color: '#fff', cursor: 'pointer', fontSize: '12px' }}

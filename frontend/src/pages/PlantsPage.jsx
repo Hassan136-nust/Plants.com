@@ -1,15 +1,26 @@
-import React, { useState } from 'react';
-import { PLANTS_DATA, PlusSymbol } from '../data/constants';
+import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
+const API = 'http://localhost:5000';
+
 export default function PlantsPage() {
-    const [activeTab, setActiveTab] = useState('all');
+    const [activeTab, setActiveTab] = useState('All');
+    const [plants, setPlants] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [toast, setToast] = useState({ show: false, msg: '', success: true });
     const { user } = useAuth();
     const { addToCart } = useCart();
 
-    const filtered = activeTab === 'all' ? PLANTS_DATA : PLANTS_DATA.filter(p => p.category === activeTab);
+    useEffect(() => {
+        fetch(`${API}/api/plants`)
+            .then(r => r.json())
+            .then(data => { setPlants(data); setLoading(false); })
+            .catch(err => { console.error(err); setLoading(false); });
+    }, []);
+
+    const categories = ['All', ...new Set(plants.map(p => p.category))];
+    const filtered = activeTab === 'All' ? plants : plants.filter(p => p.category === activeTab);
 
     const showToast = (msg, success = true) => {
         setToast({ show: true, msg, success });
@@ -17,13 +28,12 @@ export default function PlantsPage() {
     };
 
     const handleAddToCart = (plant) => {
-        addToCart(plant);
+        addToCart({ id: plant._id, name: plant.name, price: plant.price, imageUrl: plant.imageUrl, scientificName: plant.scientificName });
         showToast(`✅ ${plant.name} added to cart!`);
     };
 
     return (
         <>
-            {/* PAGE HERO */}
             <section style={{ paddingTop: '160px', paddingBottom: '60px', textAlign: 'center' }}>
                 <div className="container">
                     <div className="section-eyebrow">Our Collection</div>
@@ -39,50 +49,53 @@ export default function PlantsPage() {
                 </div>
             </section>
 
-            {/* CATALOGUE */}
             <section className="plants" style={{ paddingTop: '20px' }}>
                 <div className="container">
                     <div className="plant-filters">
-                        {['all', 'tropical', 'succulents', 'flowering', 'indoor'].map((cat) => (
+                        {categories.map((cat) => (
                             <button
                                 key={cat}
                                 className={`filter-btn ${activeTab === cat ? 'active' : ''}`}
                                 onClick={() => setActiveTab(cat)}
                             >
-                                {cat.charAt(0).toUpperCase() + cat.slice(1)} Plants
+                                {cat}
                             </button>
                         ))}
                     </div>
 
-                    <div className="plant-grid">
-                        {filtered.map((plant) => (
-                            <div key={plant.id} className="plant-card">
-                                <div className="plant-card-visual">
-                                    <span className="plant-card-tag">{plant.tag}</span>
-                                    {plant.iconComp}
-                                </div>
-                                <div className="plant-card-info">
-                                    <span className="plant-card-cat">{plant.category}</span>
-                                    <h3 className="plant-card-title">{plant.name}</h3>
-                                    <p className="plant-card-science">{plant.scientificName}</p>
-                                    <div className="plant-card-bottom">
-                                        <span className="plant-card-price">{plant.price}</span>
-                                        <button
-                                            className="plant-card-btn"
-                                            title="Add to Cart"
-                                            onClick={() => handleAddToCart(plant)}
-                                        >
-                                            <PlusSymbol />
-                                        </button>
+                    {loading ? (
+                        <div style={{ textAlign: 'center', color: '#fff', padding: '80px' }}>Loading plants...</div>
+                    ) : (
+                        <div className="plant-grid">
+                            {filtered.map((plant) => (
+                                <div key={plant._id} className="plant-card">
+                                    <div className="plant-card-visual" style={{ padding: 0, overflow: 'hidden' }}>
+                                        <img
+                                            src={plant.imageUrl.startsWith('/') ? `${API}${plant.imageUrl}` : plant.imageUrl}
+                                            alt={plant.name}
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        />
+                                    </div>
+                                    <div className="plant-card-info">
+                                        <span className="plant-card-cat">{plant.category}</span>
+                                        <h3 className="plant-card-title">{plant.name}</h3>
+                                        <p className="plant-card-science">{plant.scientificName}</p>
+                                        <div className="plant-card-bottom">
+                                            <span className="plant-card-price">{plant.price}</span>
+                                            <button
+                                                className="plant-card-btn"
+                                                title="Add to Cart"
+                                                onClick={() => handleAddToCart(plant)}
+                                            >+</button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </section>
 
-            {/* TOAST */}
             <div className={`toast ${toast.show ? 'show' : ''}`} style={{
                 background: toast.success
                     ? 'linear-gradient(135deg, var(--primary) 0%, #16402e 100%)'

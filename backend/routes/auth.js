@@ -5,8 +5,8 @@ const User = require('../models/User');
 
 const router = express.Router();
 
-const generateToken = (userId) =>
-    jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
+const generateToken = (userId, role) =>
+    jwt.sign({ id: userId, role }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
@@ -24,8 +24,8 @@ router.post('/register', async (req, res) => {
         const user = await User.create({ name, email, password: hashed });
 
         res.status(201).json({
-            token: generateToken(user._id),
-            user: { id: user._id, name: user.name, email: user.email },
+            token: generateToken(user._id, user.role),
+            user: { id: user._id, name: user.name, email: user.email, role: user.role },
         });
     } catch (err) {
         console.error('Register error:', err);
@@ -50,8 +50,8 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ message: 'Incorrect password.' });
 
         res.json({
-            token: generateToken(user._id),
-            user: { id: user._id, name: user.name, email: user.email },
+            token: generateToken(user._id, user.role),
+            user: { id: user._id, name: user.name, email: user.email, role: user.role },
         });
     } catch (err) {
         console.error('Login error:', err);
@@ -68,7 +68,7 @@ router.get('/me', async (req, res) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const user = await User.findById(decoded.id).select('-password');
         if (!user) return res.status(404).json({ message: 'User not found.' });
-        res.json({ user: { id: user._id, name: user.name, email: user.email } });
+        res.json({ user: { id: user._id, name: user.name, email: user.email, role: user.role } });
     } catch {
         res.status(401).json({ message: 'Invalid token.' });
     }
