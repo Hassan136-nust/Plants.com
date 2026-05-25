@@ -42,12 +42,12 @@ export default function ContactPage() {
                             <div className="contact-card">
                                 <ContactLocationIcon />
                                 <h4>Our Location</h4>
-                                <p>Green Valley Farm Road<br />Lahore, Punjab, Pakistan</p>
+                                <p>Gehlan Chak no. 9,<br />Pattoki District Kasur , Pakistan</p>
                             </div>
                             <div className="contact-card">
                                 <ContactPhoneIcon />
                                 <h4>Phone</h4>
-                                <p>+92 300 123 4567<br />+92 42 3456 7890</p>
+                                <p>+92 328 908 2754<br />+92 328 908 2754</p>
                             </div>
                             <div className="contact-card">
                                 <ContactClockIcon />
@@ -57,7 +57,7 @@ export default function ContactPage() {
                             <div className="contact-card">
                                 <ContactMailIcon />
                                 <h4>Email</h4>
-                                <p>hello@zianurseryfarm.com</p>
+                                <p>pyrohassan786@gmail.com</p>
                             </div>
                         </div>
 

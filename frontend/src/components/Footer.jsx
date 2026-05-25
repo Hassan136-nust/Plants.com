@@ -52,9 +52,9 @@ export default function Footer() {
                     <div className="footer-links">
                         <h4>Contact</h4>
                         <ul>
-                            <li><a href="mailto:hello@zianurseryfarm.com">hello@zianurseryfarm.com</a></li>
-                            <li><a href="tel:+923001234567">+92 300 123 4567</a></li>
-                            <li><span style={{ color: 'var(--text-dimmed)' }}>Green Valley Farm Road,<br />Lahore, Pakistan</span></li>
+                            <li><a href="mailto:pyrohassan786@gmail.com">pyrohassan786@gmail.com</a></li>
+                            <li><a href="tel:+923289082754">+92 328 908 2754</a></li>
+                            <li><span style={{ color: 'var(--text-dimmed)' }}>Gehlan Chak no. 9,<br />Pattoki District Kasur , Pakistan</span></li>
                         </ul>
                     </div>
                 </div>
