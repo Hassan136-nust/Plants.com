@@ -45,10 +45,10 @@ export default function AuthModal({ onClose, onSuccess, actionLabel = 'continue'
         <div
             onClick={onClose}
             style={{
-                position: 'fixed', inset: 0, zIndex: 1000,
+                position: 'fixed', inset: 0, zIndex: 11001,
                 background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                padding: '20px',
+                padding: '20px', pointerEvents: 'auto'
             }}
         >
             {/* Modal card */}

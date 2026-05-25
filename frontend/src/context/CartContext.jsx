@@ -27,12 +27,32 @@ export function CartProvider({ children }) {
     // UI state for the new drawer
     const [isCartOpen, setIsCartOpen] = useState(false);
     const { token } = useAuth(); // for API auth
+    const initializingRef = React.useRef(true);
+    const initRunRef = React.useRef(0);
+
+    const normalizeItem = (it) => {
+        const incomingId = it.id || it._id || (it.plant && (it.plant._id || it.plant.id));
+        return { ...it, id: incomingId ? String(incomingId) : String(incomingId) };
+    };
+
+    const dedupeCart = (arr) => {
+        const map = new Map();
+        arr.forEach(raw => {
+            const it = normalizeItem(raw);
+            const id = it.id || 'unknown';
+            if (!map.has(id)) map.set(id, { ...it, quantity: Number(it.quantity) || 0 });
+            else map.set(id, { ...map.get(id), quantity: (map.get(id).quantity || 0) + (Number(it.quantity) || 0) });
+        });
+        return Array.from(map.values());
+    };
 
     // 1. Fetch DB Cart aggressively on Login (or load guest cart)
     // On login: fetch server cart, merge guest cart, and persist to user key
     useEffect(() => {
         const init = async () => {
             try {
+                initializingRef.current = true;
+                const runId = ++initRunRef.current;
                 if (user && token) {
                     const res = await fetch('http://localhost:5001/api/cart', { headers: { Authorization: `Bearer ${token}` } });
                     const data = await res.json();
@@ -42,13 +62,8 @@ export function CartProvider({ children }) {
                     const guestStore = localStorage.getItem(GUEST_KEY);
                     const guestCart = guestStore ? JSON.parse(guestStore) : [];
 
-                    const mergedMap = new Map();
-                    serverCart.concat(guestCart).forEach(it => {
-                        const id = it.id;
-                        if (!mergedMap.has(id)) mergedMap.set(id, { ...it });
-                        else mergedMap.set(id, { ...it, quantity: (mergedMap.get(id).quantity || 0) + (it.quantity || 0) });
-                    });
-                    const merged = Array.from(mergedMap.values());
+                    // Merge and dedupe deterministically
+                    const merged = dedupeCart(serverCart.concat(guestCart));
 
                     // Normalize prices with latest product data
                     try {
@@ -59,11 +74,16 @@ export function CartProvider({ children }) {
                             const serverPlant = map.get(item.id) || item.plant || {};
                             return { ...item, plant: { ...serverPlant } };
                         });
-                        setCart(norm);
-                        localStorage.setItem(USER_KEY, JSON.stringify(norm));
+                        // ensure this is still the latest init run
+                        if (initRunRef.current === runId) {
+                            setCart(dedupeCart(norm));
+                            localStorage.setItem(USER_KEY, JSON.stringify(dedupeCart(norm)));
+                        }
                     } catch (err) {
-                        setCart(merged);
-                        localStorage.setItem(USER_KEY, JSON.stringify(merged));
+                        if (initRunRef.current === runId) {
+                            setCart(merged);
+                            localStorage.setItem(USER_KEY, JSON.stringify(merged));
+                        }
                     }
 
                     // Sync merged cart to server
@@ -72,6 +92,8 @@ export function CartProvider({ children }) {
                             method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ cart: merged })
                         });
                     } catch (err) { /* ignore */ }
+                    // Clear guest cart so repeated refreshes don't re-merge it
+                    try { localStorage.removeItem(GUEST_KEY); } catch (e) { /* ignore */ }
                 } else {
                     // No user: load guest cart and try to normalize prices from server data
                     const stored = localStorage.getItem(GUEST_KEY);
@@ -81,16 +103,22 @@ export function CartProvider({ children }) {
                         const plantsData = await plantsRes.json();
                         const map = new Map(plantsData.map(p => [p._id, p]));
                         const norm = guest.map(item => {
-                            const serverPlant = map.get(item.id) || item.plant || {};
-                            return { ...item, plant: { ...serverPlant } };
+                            const ni = normalizeItem(item);
+                            const serverPlant = map.get(ni.id) || item.plant || {};
+                            return { ...ni, plant: { ...serverPlant } };
                         });
-                        setCart(norm);
+                        const deduped = dedupeCart(norm);
+                        if (initRunRef.current === runId) setCart(deduped);
                     } catch (err) {
-                        setCart(guest);
+                        if (initRunRef.current === runId) setCart(dedupeCart(guest));
                     }
                 }
             } catch (err) {
                 console.error('Failed to initialize cart:', err);
+            }
+            finally {
+                // initialization finished
+                initializingRef.current = false;
             }
         };
         init();
@@ -98,6 +126,9 @@ export function CartProvider({ children }) {
 
     // 2. Sync to DB & LocalStorage on change
     useEffect(() => {
+        // skip syncing while initializing to avoid race conditions
+        if (initializingRef.current) return;
+
         try {
             const key = USER_KEY || GUEST_KEY;
             localStorage.setItem(key, JSON.stringify(cart));
@@ -117,17 +148,18 @@ export function CartProvider({ children }) {
 
     const addToCart = (plant) => {
         setCart(prev => {
-            const existing = prev.find(item => item.id === plant.id);
+            const incomingId = plant.id || plant._id || (plant.plant && plant.plant._id) || (plant.plant && plant.plant.id);
+            const existing = prev.find(item => item.id === incomingId);
             if (existing) {
                 // If it already exists, increase quantity
                 return prev.map(item =>
-                    item.id === plant.id
+                    item.id === incomingId
                         ? { ...item, quantity: item.quantity + 1 }
                         : item
                 );
             }
-            // Add new item to cart
-            return [...prev, { id: plant.id, plant, quantity: 1 }];
+            // Add new item to cart (store id as string)
+            return [...prev, { id: String(incomingId), plant, quantity: 1 }];
         });
     };
 
