@@ -62,15 +62,22 @@ app.use((req, res) => {
 // ─── DB CONNECTION → START SERVER ─────────────────────────────────────────────
 const PORT = process.env.PORT || 5001;
 
+// Connect to MongoDB
 mongoose
     .connect(process.env.MONGO_URI)
     .then(() => {
         console.log('✅ Connected to MongoDB Atlas');
-        app.listen(PORT, () => {
-            console.log(`🚀 Server running on http://localhost:${PORT}`);
-        });
     })
     .catch((err) => {
         console.error('❌ MongoDB connection failed:', err.message);
-        process.exit(1);
     });
+
+// Only start server if not in Vercel serverless environment
+if (process.env.VERCEL !== '1') {
+    app.listen(PORT, () => {
+        console.log(`🚀 Server running on http://localhost:${PORT}`);
+    });
+}
+
+// Export for Vercel serverless
+module.exports = app;
