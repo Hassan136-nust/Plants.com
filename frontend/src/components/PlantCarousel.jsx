@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useCart } from '../context/CartContext';
+import API_URL from '../config';
 
 const CAROUSEL_STYLES = [
     { bgColor: '#ffffff', accentColor: '#16a34a', shadowColor: 'rgba(22, 163, 74, 0.15)' },
@@ -10,7 +11,7 @@ const CAROUSEL_STYLES = [
     { bgColor: '#ffffff', accentColor: '#059669', shadowColor: 'rgba(5, 150, 105, 0.15)' },
 ];
 
-const API = 'http://localhost:5001';
+const API = API_URL;
 
 export default function PlantCarousel() {
     const [plants, setPlants] = useState([]);
@@ -23,16 +24,16 @@ export default function PlantCarousel() {
     const { addToCart } = useCart();
 
     useEffect(() => {
-        fetch(`${API}/api/plants`)
+        fetch(`${API_URL}/api/plants`)
             .then(r => r.json())
             .then(data => {
                 const carouselPlants = data.filter(p => p.isCarousel).map((p, i) => {
                     const style = CAROUSEL_STYLES[i % CAROUSEL_STYLES.length];
                     let url = p.imageUrl || '';
                     if (url.startsWith('http')) url = url.replace(':5000', ':5001');
-                    else if (url.startsWith('/')) url = `${API}${url}`;
+                    else if (url.startsWith('/')) url = `${API_URL}${url}`;
                     else if (url && (url.endsWith('.jpg') || url.endsWith('.png'))) {
-                        if (!url.includes('/uploads/')) url = `${API}/uploads/plants/${url}`;
+                        if (!url.includes('/uploads/')) url = `${API_URL}/uploads/plants/${url}`;
                     }
                     if (url !== p.imageUrl) console.warn('Carousel normalized imageUrl for', p.name, '->', url);
                     return {
@@ -247,7 +248,7 @@ export default function PlantCarousel() {
                                                 const parts = (p.imageUrl || e.target.src || '').split('/');
                                                 const file = parts[parts.length - 1];
                                                 if (file) {
-                                                    const fallback = `${API}/uploads/plants/${file}`;
+                                                    const fallback = `${API_URL}/uploads/plants/${file}`;
                                                     if (e.target.src !== fallback) {
                                                         e.target.src = fallback;
                                                         return;

@@ -1,0 +1,14 @@
+{
+  "name": "zia-nursery-monorepo",
+  "version": "1.0.0",
+  "description": "Zia Nursery Farm - Full Stack Plant E-commerce",
+  "scripts": {
+    "install-all": "npm install --prefix backend && npm install --prefix frontend",
+    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "build": "npm run build --prefix frontend",
+    "vercel-build": "cd frontend && npm install && npm run build"
+  },
+  "keywords": ["plants", "nursery", "ecommerce"],
+  "author": "",
+  "license": "ISC"
+}

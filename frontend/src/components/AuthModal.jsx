@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-
-const API = 'http://localhost:5001/api';
+import API_URL from '../config';
 
 export default function AuthModal({ onClose, onSuccess, actionLabel = 'continue' }) {
     const [tab, setTab] = useState('login'); // 'login' | 'register'
@@ -17,13 +16,13 @@ export default function AuthModal({ onClose, onSuccess, actionLabel = 'continue'
         e.preventDefault();
         setError('');
         setLoading(true);
-        const endpoint = tab === 'login' ? '/auth/login' : '/auth/register';
+        const endpoint = tab === 'login' ? '/api/auth/login' : '/api/auth/register';
         const body = tab === 'login'
             ? { email: form.email, password: form.password }
             : { name: form.name, email: form.email, password: form.password };
 
         try {
-            const res = await fetch(`${API}${endpoint}`, {
+            const res = await fetch(`${API_URL}${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),

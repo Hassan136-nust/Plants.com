@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { parsePrice } from '../utils/price';
+import { API_URL } from '../config';
 
 const CartContext = createContext(null);
 
@@ -54,7 +55,7 @@ export function CartProvider({ children }) {
                 initializingRef.current = true;
                 const runId = ++initRunRef.current;
                 if (user && token) {
-                    const res = await fetch('http://localhost:5001/api/cart', { headers: { Authorization: `Bearer ${token}` } });
+                    const res = await fetch(`${API_URL}/api/cart`, { headers: { Authorization: `Bearer ${token}` } });
                     const data = await res.json();
                     const serverCart = data.cart || [];
 
@@ -67,7 +68,7 @@ export function CartProvider({ children }) {
 
                     // Normalize prices with latest product data
                     try {
-                        const plantsRes = await fetch('http://localhost:5001/api/plants');
+                        const plantsRes = await fetch(`${API_URL}/api/plants`);
                         const plantsData = await plantsRes.json();
                         const map = new Map(plantsData.map(p => [p._id, p]));
                         const norm = merged.map(item => {
@@ -88,7 +89,7 @@ export function CartProvider({ children }) {
 
                     // Sync merged cart to server
                     try {
-                        await fetch('http://localhost:5001/api/cart', {
+                        await fetch(`${API_URL}/api/cart`, {
                             method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ cart: merged })
                         });
                     } catch (err) { /* ignore */ }
@@ -99,7 +100,7 @@ export function CartProvider({ children }) {
                     const stored = localStorage.getItem(GUEST_KEY);
                     const guest = stored ? JSON.parse(stored) : [];
                     try {
-                        const plantsRes = await fetch('http://localhost:5001/api/plants');
+                        const plantsRes = await fetch(`${API_URL}/api/plants`);
                         const plantsData = await plantsRes.json();
                         const map = new Map(plantsData.map(p => [p._id, p]));
                         const norm = guest.map(item => {
@@ -135,7 +136,7 @@ export function CartProvider({ children }) {
         } catch (err) { /* ignore */ }
 
         if (user && token) {
-            fetch('http://localhost:5001/api/cart', {
+            fetch(`${API_URL}/api/cart`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

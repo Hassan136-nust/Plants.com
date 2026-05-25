@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-
-const API = 'http://localhost:5001';
+import API_URL from '../config';
 
 export default function PlantsPage() {
     const [activeTab, setActiveTab] = useState('All');
@@ -14,7 +13,7 @@ export default function PlantsPage() {
     const { addToCart } = useCart();
 
     useEffect(() => {
-        fetch(`${API}/api/plants`)
+        fetch(`${API_URL}/api/plants`)
             .then(r => r.json())
             .then(data => {
                 const normalized = data.map(p => {

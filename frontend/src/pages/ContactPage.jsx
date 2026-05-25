@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ContactLocationIcon, ContactPhoneIcon, ContactClockIcon, ContactMailIcon } from '../data/constants';
+import API_URL from '../config';
 
 export default function ContactPage() {
     const [toast, setToast] = useState({ show: false, msg: '' });
@@ -28,7 +29,7 @@ export default function ContactPage() {
         setLoading(true);
 
         try {
-            const response = await fetch('http://localhost:5001/api/contact', {
+            const response = await fetch(`${API_URL}/api/contact`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

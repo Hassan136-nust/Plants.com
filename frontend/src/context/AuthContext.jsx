@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import API_URL from '../config';
 
 const AuthContext = createContext(null);
 
@@ -14,7 +15,7 @@ export function AuthProvider({ children }) {
     useEffect(() => {
         const stored = localStorage.getItem('zn_token');
         if (!stored) { setLoading(false); return; }
-        fetch('http://localhost:5001/api/auth/me', {
+        fetch(`${API_URL}/api/auth/me`, {
             headers: { Authorization: `Bearer ${stored}` },
         })
             .then(r => r.json())

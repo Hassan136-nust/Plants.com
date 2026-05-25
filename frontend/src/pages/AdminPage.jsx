@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { API_URL } from '../config';
 
-const API = 'http://localhost:5001/api';
-const HOST = API.replace('/api', '');
+const API = `${API_URL}/api`;
+const HOST = API_URL;
 
 const resolveImageSrc = (url) => {
     if (!url) return '';
@@ -36,7 +37,7 @@ export default function AdminPage() {
 
     const fetchOrders = async () => {
         try {
-            const res = await fetch(`${API}/orders`, { headers: { Authorization: `Bearer ${token}` } });
+            const res = await fetch(`${API_URL}/api/orders`, { headers: { Authorization: `Bearer ${token}` } });
             const data = await res.json();
             if (res.ok) setOrders(data);
         } catch (err) { console.error(err); }
@@ -44,7 +45,7 @@ export default function AdminPage() {
 
     const fetchPlants = async () => {
         try {
-            const res = await fetch(`${API}/plants`);
+            const res = await fetch(`${API_URL}/api/plants`);
             const data = await res.json();
             if (res.ok) setPlants(data);
         } catch (err) { console.error(err); }
@@ -59,7 +60,7 @@ export default function AdminPage() {
 
     const handleConfirmOrder = async (id) => {
         try {
-            const res = await fetch(`${API}/orders/${id}/status`, {
+            const res = await fetch(`${API_URL}/api/orders/${id}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ status: 'confirmed' })
@@ -81,7 +82,7 @@ export default function AdminPage() {
             if (!plantFile) return alert('Image file is required');
             formData.append('image', plantFile);
 
-            const res = await fetch(`${API}/plants`, {
+            const res = await fetch(`${API_URL}/api/plants`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` },
                 body: formData
@@ -106,7 +107,7 @@ export default function AdminPage() {
         try {
             const formData = new FormData();
             formData.append('image', file);
-            const res = await fetch(`${API}/plants/${updatingPlantId}`, {
+            const res = await fetch(`${API_URL}/api/plants/${updatingPlantId}`, {
                 method: 'PUT',
                 headers: { Authorization: `Bearer ${token}` },
                 body: formData
