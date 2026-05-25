@@ -26,7 +26,8 @@ const userSchema = new mongoose.Schema({
     },
     cart: [
         {
-            id: { type: Number, required: true },
+            // Accept string IDs (Mongo ObjectId hex) or numeric ids
+            id: { type: String, required: true },
             plant: { type: Object, required: true },
             quantity: { type: Number, required: true, default: 1 }
         }

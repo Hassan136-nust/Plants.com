@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { parsePrice, formatRupee } from '../utils/price';
 
 export default function CheckoutPage() {
     const { cart, subtotal, itemsCount, clearCart } = useCart();
-    const { token } = useAuth();
+    const { token, user } = useAuth();
     const navigate = useNavigate();
 
     const [form, setForm] = useState({
@@ -15,8 +16,8 @@ export default function CheckoutPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    const advanceAmount = (subtotal * 0.70).toFixed(2);
-    const deliveryAmount = (subtotal * 0.30).toFixed(2);
+    const advanceAmountNum = subtotal * 0.70;
+    const deliveryAmountNum = subtotal * 0.30;
 
     const handleInput = (e) => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
     const handleFile = (e) => setReceipt(e.target.files[0]);
@@ -71,12 +72,28 @@ export default function CheckoutPage() {
     if (cart.length === 0) {
         return (
             <div className="container" style={{ padding: '120px 0', textAlign: 'center' }}>
-                <h2 style={{ color: '#fff' }}>Your cart is empty.</h2>
+                <h2 style={{ color: '#fff', fontSize: '32px', marginBottom: '20px' }}>Your cart is empty.</h2>
+                <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: '30px' }}>Add some plants to your cart to continue shopping.</p>
                 <button
                     onClick={() => navigate('/plants')}
-                    style={{ background: '#4ade80', padding: '12px 24px', borderRadius: '50px', marginTop: '20px', cursor: 'pointer', border: 'none', fontWeight: 'bold' }}
+                    style={{ background: '#4ade80', padding: '12px 24px', borderRadius: '50px', marginTop: '20px', cursor: 'pointer', border: 'none', fontWeight: 'bold', color: '#000' }}
                 >
-                    Return to Shop
+                    Browse Plants
+                </button>
+            </div>
+        );
+    }
+
+    if (!user || !token) {
+        return (
+            <div className="container" style={{ padding: '120px 0', textAlign: 'center' }}>
+                <h2 style={{ color: '#fff', fontSize: '32px', marginBottom: '20px' }}>Please Sign In</h2>
+                <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: '30px' }}>You need to be logged in to proceed to checkout.</p>
+                <button
+                    onClick={() => navigate('/')}
+                    style={{ background: '#4ade80', padding: '12px 24px', borderRadius: '50px', marginTop: '20px', cursor: 'pointer', border: 'none', fontWeight: 'bold', color: '#000' }}
+                >
+                    Go to Home & Sign In
                 </button>
             </div>
         );
@@ -115,9 +132,9 @@ export default function CheckoutPage() {
 
                         <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', padding: '24px', borderRadius: '16px', marginTop: '16px' }}>
                             <h4 style={{ color: '#4ade80', marginBottom: '16px', fontSize: '18px' }}>Payment Instructions</h4>
-                            <p style={{ color: '#fff', fontSize: '14px', lineHeight: 1.6, opacity: 0.9 }}>
-                                Please pay <strong style={{ color: '#f8db7d' }}>70% advance (Rs. {advanceAmount})</strong> to confirm your order.
-                                The remaining 30% (Rs. {deliveryAmount}) will be collected on delivery.
+                                <p style={{ color: '#fff', fontSize: '14px', lineHeight: 1.6, opacity: 0.9 }}>
+                                Please pay <strong style={{ color: '#f8db7d' }}>70% advance ({formatRupee(advanceAmountNum)})</strong> to confirm your order.
+                                The remaining 30% ({formatRupee(deliveryAmountNum)}) will be collected on delivery.
                             </p>
                             <div style={{ padding: '16px', background: 'rgba(74, 222, 128, 0.1)', borderRadius: '12px', marginTop: '16px', border: '1px dashed rgba(74,222,128,0.3)' }}>
                                 <p style={{ color: '#fff', fontSize: '14px', margin: '0 0 8px' }}>Send funds via Easypaisa or Jazzcash to:</p>
@@ -155,14 +172,17 @@ export default function CheckoutPage() {
                                     <span style={{ opacity: 0.6 }}>{item.quantity}x</span>
                                     <span>{item.plant.name}</span>
                                 </div>
-                                <span style={{ color: '#f8db7d' }}>Rs. {(parseFloat(item.plant.price.replace(/[^0-9.]/g, '')) * item.quantity).toFixed(2)}</span>
+                                <span style={{ color: '#f8db7d' }}>{(() => {
+                                    const price = parsePrice(item.plant?.price);
+                                    return `Rs. ${(price * item.quantity).toFixed(2)}`;
+                                })()}</span>
                             </div>
                         ))}
                     </div>
                     <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', color: '#fff' }}>
                             <span style={{ opacity: 0.6 }}>Subtotal ({itemsCount} items)</span>
-                            <span>Rs. {subtotal.toFixed(2)}</span>
+                            <span>{formatRupee(subtotal)}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', color: '#fff' }}>
                             <span style={{ opacity: 0.6 }}>Shipping</span>
@@ -170,11 +190,11 @@ export default function CheckoutPage() {
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', color: '#fff', fontSize: '20px', fontWeight: 'bold', marginTop: '12px' }}>
                             <span>Total</span>
-                            <span>${subtotal.toFixed(2)}</span>
+                            <span>{formatRupee(subtotal)}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', color: '#4ade80', fontSize: '16px', fontWeight: 'bold', marginTop: '12px' }}>
                             <span>70% Advance Payable</span>
-                            <span>${advanceAmount}</span>
+                            <span>{formatRupee(advanceAmountNum)}</span>
                         </div>
                     </div>
                 </div>

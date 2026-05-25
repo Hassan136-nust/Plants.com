@@ -8,6 +8,7 @@ const orderRoutes = require('./routes/orders');
 const cartRoutes = require('./routes/cart');
 const uploadRoutes = require('./routes/upload');
 const plantsRoutes = require('./routes/plants');
+const contactRoutes = require('./routes/contact');
 const path = require('path');
 
 const app = express();
@@ -31,6 +32,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/plants', plantsRoutes);
+app.use('/api/contact', contactRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

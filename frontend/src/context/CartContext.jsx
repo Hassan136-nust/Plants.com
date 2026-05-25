@@ -1,17 +1,27 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import { parsePrice } from '../utils/price';
 
 const CartContext = createContext(null);
+
+// Cart version - DO NOT change this anymore
+const CART_VERSION = 10;
 
 export function CartProvider({ children }) {
     const { user } = useAuth();
 
-    // Dynamic key dependent on the user ID
-    const cartKey = `zn_cart_${user ? user.id : 'guest'}`;
+    // Keys: keep a stable guest key and a per-user key
+    const GUEST_KEY = 'zn_cart_guest';
+    const USER_KEY = user ? `zn_cart_${user.id}` : null;
 
     const [cart, setCart] = useState(() => {
-        const stored = localStorage.getItem(cartKey);
-        return stored ? JSON.parse(stored) : [];
+        try {
+            const key = USER_KEY || GUEST_KEY;
+            const stored = localStorage.getItem(key);
+            return stored ? JSON.parse(stored) : [];
+        } catch (err) {
+            return [];
+        }
     });
 
     // UI state for the new drawer
@@ -19,28 +29,79 @@ export function CartProvider({ children }) {
     const { token } = useAuth(); // for API auth
 
     // 1. Fetch DB Cart aggressively on Login (or load guest cart)
+    // On login: fetch server cart, merge guest cart, and persist to user key
     useEffect(() => {
-        if (user && token) {
-            fetch('http://localhost:5001/api/cart', {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-                .then(r => r.json())
-                .then(data => {
-                    if (data.cart) {
-                        setCart(data.cart);
-                        localStorage.setItem(cartKey, JSON.stringify(data.cart));
+        const init = async () => {
+            try {
+                if (user && token) {
+                    const res = await fetch('http://localhost:5001/api/cart', { headers: { Authorization: `Bearer ${token}` } });
+                    const data = await res.json();
+                    const serverCart = data.cart || [];
+
+                    // Merge guest cart into server cart (sum quantities)
+                    const guestStore = localStorage.getItem(GUEST_KEY);
+                    const guestCart = guestStore ? JSON.parse(guestStore) : [];
+
+                    const mergedMap = new Map();
+                    serverCart.concat(guestCart).forEach(it => {
+                        const id = it.id;
+                        if (!mergedMap.has(id)) mergedMap.set(id, { ...it });
+                        else mergedMap.set(id, { ...it, quantity: (mergedMap.get(id).quantity || 0) + (it.quantity || 0) });
+                    });
+                    const merged = Array.from(mergedMap.values());
+
+                    // Normalize prices with latest product data
+                    try {
+                        const plantsRes = await fetch('http://localhost:5001/api/plants');
+                        const plantsData = await plantsRes.json();
+                        const map = new Map(plantsData.map(p => [p._id, p]));
+                        const norm = merged.map(item => {
+                            const serverPlant = map.get(item.id) || item.plant || {};
+                            return { ...item, plant: { ...serverPlant } };
+                        });
+                        setCart(norm);
+                        localStorage.setItem(USER_KEY, JSON.stringify(norm));
+                    } catch (err) {
+                        setCart(merged);
+                        localStorage.setItem(USER_KEY, JSON.stringify(merged));
                     }
-                })
-                .catch(err => console.error('Failed to pre-fetch cart:', err));
-        } else {
-            const stored = localStorage.getItem(cartKey);
-            setCart(stored ? JSON.parse(stored) : []);
-        }
-    }, [user, token, cartKey]);
+
+                    // Sync merged cart to server
+                    try {
+                        await fetch('http://localhost:5001/api/cart', {
+                            method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ cart: merged })
+                        });
+                    } catch (err) { /* ignore */ }
+                } else {
+                    // No user: load guest cart and try to normalize prices from server data
+                    const stored = localStorage.getItem(GUEST_KEY);
+                    const guest = stored ? JSON.parse(stored) : [];
+                    try {
+                        const plantsRes = await fetch('http://localhost:5001/api/plants');
+                        const plantsData = await plantsRes.json();
+                        const map = new Map(plantsData.map(p => [p._id, p]));
+                        const norm = guest.map(item => {
+                            const serverPlant = map.get(item.id) || item.plant || {};
+                            return { ...item, plant: { ...serverPlant } };
+                        });
+                        setCart(norm);
+                    } catch (err) {
+                        setCart(guest);
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to initialize cart:', err);
+            }
+        };
+        init();
+    }, [user, token]);
 
     // 2. Sync to DB & LocalStorage on change
     useEffect(() => {
-        localStorage.setItem(cartKey, JSON.stringify(cart));
+        try {
+            const key = USER_KEY || GUEST_KEY;
+            localStorage.setItem(key, JSON.stringify(cart));
+        } catch (err) { /* ignore */ }
 
         if (user && token) {
             fetch('http://localhost:5001/api/cart', {
@@ -52,7 +113,7 @@ export function CartProvider({ children }) {
                 body: JSON.stringify({ cart })
             }).catch(err => console.error('Failed to sync cart:', err));
         }
-    }, [cart, cartKey, user, token]);
+    }, [cart, USER_KEY, user, token]);
 
     const addToCart = (plant) => {
         setCart(prev => {
@@ -89,10 +150,10 @@ export function CartProvider({ children }) {
     // Derived states
     const itemsCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
-    // Parse prices safely: assume plant.price looks like "$45"
+    // Compute subtotal from numeric price values. Prefer server-provided prices.
     const subtotal = cart.reduce((acc, item) => {
-        const priceNum = parseFloat(item.plant.price.replace(/[^0-9.]/g, ''));
-        return acc + (priceNum * item.quantity);
+        const priceNum = parsePrice(item.plant?.price);
+        return acc + (priceNum * (item.quantity || 1));
     }, 0);
 
     return (

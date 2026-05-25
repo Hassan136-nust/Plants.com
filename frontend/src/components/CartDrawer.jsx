@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { parsePrice, formatRupee } from '../utils/price';
 
 const API = 'http://localhost:5001/api';
 
@@ -74,7 +75,9 @@ export default function CartDrawer() {
                                             <h4 style={{ color: '#fff', fontFamily: 'var(--font-serif)', margin: 0, fontSize: '16px' }}>{item.plant.name}</h4>
                                             <button onClick={() => removeFromCart(item.id)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', opacity: 0.8, fontSize: '12px' }}>Remove</button>
                                         </div>
-                                        <div style={{ color: '#f8db7d', fontWeight: 'bold', fontSize: '14px', marginBottom: '12px' }}>{item.plant.price}</div>
+                                        <div style={{ color: '#f8db7d', fontWeight: 'bold', fontSize: '14px', marginBottom: '12px' }}>
+                                            {formatRupee(parsePrice(item.plant?.price))}
+                                        </div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                             <button onClick={() => updateQuantity(item.id, -1)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', width: '28px', height: '28px', borderRadius: '8px', cursor: 'pointer' }}>-</button>
                                             <span style={{ color: '#fff', fontSize: '14px', width: '16px', textAlign: 'center' }}>{item.quantity}</span>
@@ -92,7 +95,7 @@ export default function CartDrawer() {
                     <div style={{ padding: '32px', background: 'rgba(0,0,0,0.3)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', color: '#fff', fontFamily: 'var(--font-sans)', fontSize: '14px', marginBottom: '8px' }}>
                             <span style={{ opacity: 0.6 }}>Subtotal ({itemsCount} items)</span>
-                            <span style={{ fontWeight: 'bold' }}>${subtotal.toFixed(2)}</span>
+                            <span style={{ fontWeight: 'bold' }}>{formatRupee(subtotal)}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', color: '#fff', fontFamily: 'var(--font-sans)', fontSize: '14px', marginBottom: '24px' }}>
                             <span style={{ opacity: 0.6 }}>Shipping</span>

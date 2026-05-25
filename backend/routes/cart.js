@@ -25,7 +25,11 @@ router.put('/', protect, async (req, res) => {
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
-        user.cart = cart || [];
+        // Ensure ids are stored as strings to match schema (ObjectId hex)
+        user.cart = (cart || []).map(it => ({
+            ...it,
+            id: it.id !== undefined && it.id !== null ? String(it.id) : String(it.id)
+        }));
         await user.save();
 
         res.status(200).json({ cart: user.cart, message: 'Cart synced' });

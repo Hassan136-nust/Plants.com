@@ -145,12 +145,12 @@ export const PlusSymbol = () => (
 // === SHARED DATA ===
 
 export const PLANTS_DATA = [
-    { id: 1, name: 'Monstera Deliciosa', scientificName: 'Monstera deliciosa', category: 'tropical', price: '$45.00', tag: 'Popular', iconComp: <MonsteraIcon /> },
-    { id: 2, name: 'Snake Plant Laurentii', scientificName: 'Sansevieria trifasciata', category: 'indoor', price: '$28.00', tag: 'Low Light', iconComp: <SnakePlantIcon /> },
-    { id: 3, name: 'Golden Pothos Hanging', scientificName: 'Epipremnum aureum', category: 'indoor', price: '$22.00', tag: 'Easy Care', iconComp: <PothosIcon /> },
-    { id: 4, name: 'Blue Star Succulent', scientificName: 'Echeveria glauca', category: 'succulents', price: '$18.00', tag: 'Drought Tolerant', iconComp: <SucculentIcon /> },
-    { id: 5, name: 'Paradise Lily', scientificName: 'Spathiphyllum wallisii', category: 'flowering', price: '$35.00', tag: 'Air Purifier', iconComp: <LilyIcon /> },
-    { id: 6, name: 'Calathea Orbifolia', scientificName: 'Calathea orbifolia', category: 'tropical', price: '$38.00', tag: 'Rare Exotics', iconComp: <CalatheaIcon /> },
+    { id: 1, name: 'Monstera Deliciosa', scientificName: 'Monstera deliciosa', category: 'tropical', price: 'Rs. 2500', tag: 'Popular', iconComp: <MonsteraIcon /> },
+    { id: 2, name: 'Snake Plant Laurentii', scientificName: 'Sansevieria trifasciata', category: 'indoor', price: 'Rs. 950', tag: 'Low Light', iconComp: <SnakePlantIcon /> },
+    { id: 3, name: 'Golden Pothos Hanging', scientificName: 'Epipremnum aureum', category: 'indoor', price: 'Rs. 650', tag: 'Easy Care', iconComp: <PothosIcon /> },
+    { id: 4, name: 'Blue Star Succulent', scientificName: 'Echeveria glauca', category: 'succulents', price: 'Rs. 450', tag: 'Drought Tolerant', iconComp: <SucculentIcon /> },
+    { id: 5, name: 'Paradise Lily', scientificName: 'Spathiphyllum wallisii', category: 'flowering', price: 'Rs. 1300', tag: 'Air Purifier', iconComp: <LilyIcon /> },
+    { id: 6, name: 'Calathea Orbifolia', scientificName: 'Calathea orbifolia', category: 'tropical', price: 'Rs. 1800', tag: 'Rare Exotics', iconComp: <CalatheaIcon /> },
 ];
 
 export const TESTIMONIALS = [
