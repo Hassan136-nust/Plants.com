@@ -19,6 +19,13 @@ const userSchema = new mongoose.Schema({
         required: [true, 'Password is required'],
         minlength: 6,
     },
+    cart: [
+        {
+            id: { type: Number, required: true },
+            plant: { type: Object, required: true },
+            quantity: { type: Number, required: true, default: 1 }
+        }
+    ]
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

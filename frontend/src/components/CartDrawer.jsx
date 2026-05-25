@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -9,6 +10,7 @@ export default function CartDrawer() {
     const { user, token, triggerAuth } = useAuth();
     const [loading, setLoading] = useState(false);
     const [toast, setToast] = useState({ show: false, msg: '' });
+    const navigate = useNavigate();
 
     const showToast = (msg) => {
         setToast({ show: true, msg });
@@ -17,34 +19,15 @@ export default function CartDrawer() {
 
     const handleCheckout = () => {
         if (!user || !token) {
-            triggerAuth(processOrder);
+            triggerAuth(() => {
+                setIsCartOpen(false);
+                navigate('/checkout');
+            });
             return;
         }
-        processOrder(user, token);
+        setIsCartOpen(false);
+        navigate('/checkout');
     };
-
-    const processOrder = async (orderUser, orderToken) => {
-        setLoading(true);
-        try {
-            // Send entire cart to backend
-            const res = await fetch(`${API}/orders`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${orderToken}` },
-                body: JSON.stringify({ items: cart }),
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message);
-
-            showToast('✅ Order placed successfully!');
-            clearCart();
-            setTimeout(() => setIsCartOpen(false), 2000);
-        } catch (err) {
-            showToast(`❌ ${err.message}`);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     if (!isCartOpen) return null;
 
     return (

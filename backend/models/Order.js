@@ -18,6 +18,12 @@ const orderSchema = new mongoose.Schema({
         required: true,
         default: 0
     },
+    address: { type: String, required: true },
+    city: { type: String, required: true },
+    zipCode: { type: String, required: true },
+    phone: { type: String, required: true },
+    advancePaid: { type: Boolean, default: false },
+    receiptUrl: { type: String, required: true },
     status: {
         type: String,
         enum: ['pending', 'confirmed', 'delivered'],

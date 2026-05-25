@@ -1,20 +1,58 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 const CartContext = createContext(null);
 
 export function CartProvider({ children }) {
-    // cart items shape: { id: string/number, plant: object, quantity: number }
+    const { user } = useAuth();
+
+    // Dynamic key dependent on the user ID
+    const cartKey = `zn_cart_${user ? user.id : 'guest'}`;
+
     const [cart, setCart] = useState(() => {
-        const stored = localStorage.getItem('zn_cart');
+        const stored = localStorage.getItem(cartKey);
         return stored ? JSON.parse(stored) : [];
     });
 
     // UI state for the new drawer
     const [isCartOpen, setIsCartOpen] = useState(false);
+    const { token } = useAuth(); // for API auth
 
+    // 1. Fetch DB Cart aggressively on Login (or load guest cart)
     useEffect(() => {
-        localStorage.setItem('zn_cart', JSON.stringify(cart));
-    }, [cart]);
+        if (user && token) {
+            fetch('http://localhost:5000/api/cart', {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.cart) {
+                        setCart(data.cart);
+                        localStorage.setItem(cartKey, JSON.stringify(data.cart));
+                    }
+                })
+                .catch(err => console.error('Failed to pre-fetch cart:', err));
+        } else {
+            const stored = localStorage.getItem(cartKey);
+            setCart(stored ? JSON.parse(stored) : []);
+        }
+    }, [user, token, cartKey]);
+
+    // 2. Sync to DB & LocalStorage on change
+    useEffect(() => {
+        localStorage.setItem(cartKey, JSON.stringify(cart));
+
+        if (user && token) {
+            fetch('http://localhost:5000/api/cart', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ cart })
+            }).catch(err => console.error('Failed to sync cart:', err));
+        }
+    }, [cart, cartKey, user, token]);
 
     const addToCart = (plant) => {
         setCart(prev => {
@@ -30,9 +68,6 @@ export function CartProvider({ children }) {
             // Add new item to cart
             return [...prev, { id: plant.id, plant, quantity: 1 }];
         });
-
-        // Auto-open drawer to show them it was added
-        setIsCartOpen(true);
     };
 
     const removeFromCart = (id) => {

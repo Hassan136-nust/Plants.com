@@ -5,6 +5,9 @@ const mongoose = require('mongoose');
 
 const authRoutes = require('./routes/auth');
 const orderRoutes = require('./routes/orders');
+const cartRoutes = require('./routes/cart');
+const uploadRoutes = require('./routes/upload');
+const path = require('path');
 
 const app = express();
 
@@ -14,6 +17,9 @@ app.use(cors({
     credentials: true,
 }));
 
+// ─── STATIC & POST UPLOADS ───────────────────────────────────────────────────
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // ─── BODY PARSER ─────────────────────────────────────────────────────────────
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -21,6 +27,8 @@ app.use(express.urlencoded({ extended: true }));
 // ─── ROUTES ──────────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
