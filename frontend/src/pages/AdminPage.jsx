@@ -2,24 +2,36 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-const API = 'http://localhost:5000/api';
+const API = 'http://localhost:5001/api';
+const HOST = API.replace('/api', '');
+
+const resolveImageSrc = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('/')) return `${HOST}${url}`;
+    return `${HOST}/uploads/plants/${url}`;
+};
 
 export default function AdminPage() {
     const { user, token } = useAuth();
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('orders'); // 'orders' | 'plants'
+    const [activeTab, setActiveTab] = useState('orders');
 
     const [orders, setOrders] = useState([]);
     const [plants, setPlants] = useState([]);
 
     const [newPlant, setNewPlant] = useState({ name: '', scientificName: '', price: '', category: '', isCarousel: false });
     const [plantFile, setPlantFile] = useState(null);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
+    const fileInputRef = React.useRef(null);
+    const [updatingPlantId, setUpdatingPlantId] = useState(null);
+    // Map of plantId -> draft price being edited
+    const [editingPrices, setEditingPrices] = useState({});
 
-    // Protection mapping
     useEffect(() => {
-        if (!user || user.role !== 'admin') {
-            navigate('/');
-        }
+        if (!user || user.role !== 'admin') navigate('/');
     }, [user, navigate]);
 
     const fetchOrders = async () => {
@@ -27,7 +39,7 @@ export default function AdminPage() {
             const res = await fetch(`${API}/orders`, { headers: { Authorization: `Bearer ${token}` } });
             const data = await res.json();
             if (res.ok) setOrders(data);
-        } catch (err) { console.error('Error fetching orders:', err); }
+        } catch (err) { console.error(err); }
     };
 
     const fetchPlants = async () => {
@@ -35,7 +47,7 @@ export default function AdminPage() {
             const res = await fetch(`${API}/plants`);
             const data = await res.json();
             if (res.ok) setPlants(data);
-        } catch (err) { console.error('Error fetching plants:', err); }
+        } catch (err) { console.error(err); }
     };
 
     useEffect(() => {
@@ -58,6 +70,7 @@ export default function AdminPage() {
 
     const handleAddPlant = async (e) => {
         e.preventDefault();
+        setError(''); setSuccess('');
         try {
             const formData = new FormData();
             formData.append('name', newPlant.name);
@@ -65,11 +78,8 @@ export default function AdminPage() {
             formData.append('price', newPlant.price);
             formData.append('category', newPlant.category);
             formData.append('isCarousel', newPlant.isCarousel);
-            if (plantFile) {
-                formData.append('image', plantFile);
-            } else {
-                return alert('Image file is strictly required');
-            }
+            if (!plantFile) return alert('Image file is required');
+            formData.append('image', plantFile);
 
             const res = await fetch(`${API}/plants`, {
                 method: 'POST',
@@ -79,18 +89,69 @@ export default function AdminPage() {
             if (res.ok) {
                 setNewPlant({ name: '', scientificName: '', price: '', category: '', isCarousel: false });
                 setPlantFile(null);
+                setSuccess('Plant added successfully!');
+                setTimeout(() => setSuccess(''), 3000);
                 fetchPlants();
             } else {
                 const data = await res.json();
-                alert(data.message || 'Error adding plant');
+                setError(data.message || 'Error adding plant');
             }
+        } catch (err) { setError(err.message); }
+    };
+
+    const handleUpdatePic = async (e) => {
+        const file = e.target.files[0];
+        if (!file || !updatingPlantId) return;
+        setError(''); setSuccess('');
+        try {
+            const formData = new FormData();
+            formData.append('image', file);
+            const res = await fetch(`${API}/plants/${updatingPlantId}`, {
+                method: 'PUT',
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+            setPlants(plants.map(p => p._id === updatingPlantId ? { ...p, imageUrl: data.imageUrl } : p));
+            setSuccess('Picture updated!');
+            setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
-            console.error(err);
+            setError(err.message);
+        } finally {
+            setUpdatingPlantId(null);
+            e.target.value = null;
         }
     };
 
+    const triggerFileInput = (id) => {
+        setUpdatingPlantId(id);
+        fileInputRef.current.click();
+    };
+
+    const handleSavePrice = async (id) => {
+        const newPrice = editingPrices[id];
+        if (!newPrice || !newPrice.trim()) return;
+        setError(''); setSuccess('');
+        try {
+            const formData = new FormData();
+            formData.append('price', newPrice.trim());
+            const res = await fetch(`${API}/plants/${id}`, {
+                method: 'PUT',
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+            setPlants(plants.map(p => p._id === id ? { ...p, price: data.price } : p));
+            setEditingPrices(prev => { const n = { ...prev }; delete n[id]; return n; });
+            setSuccess('Price updated for all users!');
+            setTimeout(() => setSuccess(''), 3000);
+        } catch (err) { setError(err.message); }
+    };
+
     const handleDeletePlant = async (id) => {
-        if (!window.confirm("Are you sure?")) return;
+        if (!window.confirm('Delete this plant?')) return;
         try {
             const res = await fetch(`${API}/plants/${id}`, {
                 method: 'DELETE',
@@ -105,17 +166,23 @@ export default function AdminPage() {
     return (
         <section className="container" style={{ padding: '120px 20px', minHeight: '80vh' }}>
             <h2 className="section-title">Admin Dashboard</h2>
+
+            {(error || success) && (
+                <div style={{
+                    padding: '12px 20px', borderRadius: '10px', marginBottom: '20px',
+                    background: error ? 'rgba(239,68,68,0.15)' : 'rgba(74,222,128,0.15)',
+                    border: `1px solid ${error ? '#ef4444' : '#4ade80'}`,
+                    color: error ? '#ef4444' : '#4ade80'
+                }}>
+                    {error || success}
+                </div>
+            )}
+
             <div style={{ display: 'flex', gap: '20px', marginBottom: '40px' }}>
-                <button
-                    onClick={() => setActiveTab('orders')}
-                    style={{ background: activeTab === 'orders' ? '#4ade80' : 'rgba(255,255,255,0.1)', color: activeTab === 'orders' ? '#000' : '#fff', border: 'none', padding: '12px 24px', borderRadius: '50px', cursor: 'pointer', fontWeight: 'bold' }}
-                >
+                <button onClick={() => setActiveTab('orders')} style={{ background: activeTab === 'orders' ? '#4ade80' : 'rgba(255,255,255,0.1)', color: activeTab === 'orders' ? '#000' : '#fff', border: 'none', padding: '12px 24px', borderRadius: '50px', cursor: 'pointer', fontWeight: 'bold' }}>
                     Manage Orders
                 </button>
-                <button
-                    onClick={() => setActiveTab('plants')}
-                    style={{ background: activeTab === 'plants' ? '#4ade80' : 'rgba(255,255,255,0.1)', color: activeTab === 'plants' ? '#000' : '#fff', border: 'none', padding: '12px 24px', borderRadius: '50px', cursor: 'pointer', fontWeight: 'bold' }}
-                >
+                <button onClick={() => setActiveTab('plants')} style={{ background: activeTab === 'plants' ? '#4ade80' : 'rgba(255,255,255,0.1)', color: activeTab === 'plants' ? '#000' : '#fff', border: 'none', padding: '12px 24px', borderRadius: '50px', cursor: 'pointer', fontWeight: 'bold' }}>
                     Manage Plants (CMS)
                 </button>
             </div>
@@ -147,7 +214,7 @@ export default function AdminPage() {
                                         </td>
                                         <td style={{ padding: '20px 12px', color: '#f8db7d' }}>Rs. {order.totalAmount}</td>
                                         <td style={{ padding: '20px 12px' }}>
-                                            <a href={`http://localhost:5000${order.receiptUrl}`} target="_blank" rel="noreferrer" style={{ color: '#4ade80', textDecoration: 'none' }}>
+                                            <a href={`${HOST}${order.receiptUrl}`} target="_blank" rel="noreferrer" style={{ color: '#4ade80', textDecoration: 'none' }}>
                                                 View Pic
                                             </a>
                                         </td>
@@ -170,12 +237,13 @@ export default function AdminPage() {
 
             {activeTab === 'plants' && (
                 <div style={{ display: 'flex', gap: '40px', flexWrap: 'wrap' }}>
+                    {/* Upload New Plant */}
                     <div style={{ flex: '1 1 400px', background: 'rgba(0,0,0,0.4)', padding: '30px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
                         <h3 style={{ color: '#fff', marginBottom: '20px' }}>Upload New Plant</h3>
                         <form onSubmit={handleAddPlant} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                             <input className="contact-input" placeholder="Display Name (e.g. Snake Plant)" required value={newPlant.name} onChange={e => setNewPlant({ ...newPlant, name: e.target.value })} />
                             <input className="contact-input" placeholder="Scientific Name" required value={newPlant.scientificName} onChange={e => setNewPlant({ ...newPlant, scientificName: e.target.value })} />
-                            <input className="contact-input" placeholder="Price (e.g. Rs. 30.00)" required value={newPlant.price} onChange={e => setNewPlant({ ...newPlant, price: e.target.value })} />
+                            <input className="contact-input" placeholder="Price (e.g. Rs. 2500)" required value={newPlant.price} onChange={e => setNewPlant({ ...newPlant, price: e.target.value })} />
                             <input className="contact-input" placeholder="Category (e.g. Indoor)" required value={newPlant.category} onChange={e => setNewPlant({ ...newPlant, category: e.target.value })} list="category-options" />
                             <datalist id="category-options">
                                 <option value="Indoor" />
@@ -201,19 +269,66 @@ export default function AdminPage() {
                         </form>
                     </div>
 
+                    {/* Current Inventory */}
                     <div style={{ flex: '1 1 500px', background: 'rgba(0,0,0,0.4)', padding: '30px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
                         <h3 style={{ color: '#fff', marginBottom: '20px' }}>Current Inventory</h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                            {plants.map(p => (
-                                <div key={p._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '16px', borderRadius: '12px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                        <img src={`http://localhost:5000${p.imageUrl}`} alt={p.name} style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px' }} onError={(e) => e.target.src = p.imageUrl} />
+
+                        {/* Hidden file input for per-plant pic updates */}
+                        <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleUpdatePic} />
+
+                        <input
+                            type="text"
+                            placeholder="🔍 Search inventory..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            style={{
+                                padding: '10px 16px', width: '100%', marginBottom: '16px',
+                                borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)',
+                                background: 'rgba(0,0,0,0.2)', color: '#fff', outline: 'none', boxSizing: 'border-box'
+                            }}
+                        />
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '60vh', overflowY: 'auto' }}>
+                            {plants.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase())).map(p => (
+                                <div key={p._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '12px 16px', borderRadius: '12px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                        <img
+                                            src={resolveImageSrc(p.imageUrl)}
+                                            alt={p.name}
+                                            loading="lazy"
+                                            style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0 }}
+                                            onError={(e) => {
+                                                e.target.onerror = null;
+                                                try { const parts = e.target.src.split('/'); const f = parts[parts.length - 1]; e.target.src = `${HOST}/uploads/plants/${f}`; } catch { e.target.style.display = 'none'; }
+                                            }}
+                                        />
                                         <div>
-                                            <div style={{ color: '#fff', fontWeight: 'bold' }}>{p.name}</div>
-                                            <div style={{ color: '#f8db7d', fontSize: '14px' }}>{p.price}</div>
+                                            <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>{p.name}</div>
+                                            <div style={{ color: '#a0a0a0', fontSize: '12px' }}>{p.category}</div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                                                <input
+                                                    type="text"
+                                                    value={editingPrices[p._id] !== undefined ? editingPrices[p._id] : p.price}
+                                                    onChange={(e) => setEditingPrices(prev => ({ ...prev, [p._id]: e.target.value }))}
+                                                    style={{
+                                                        background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)',
+                                                        color: '#f8db7d', borderRadius: '6px', padding: '3px 8px',
+                                                        width: '110px', fontSize: '13px', outline: 'none'
+                                                    }}
+                                                />
+                                                {editingPrices[p._id] !== undefined && editingPrices[p._id] !== p.price && (
+                                                    <button
+                                                        onClick={() => handleSavePrice(p._id)}
+                                                        style={{ background: '#f8db7d', color: '#000', border: 'none', padding: '3px 9px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
+                                                    >Save</button>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                    <button onClick={() => handleDeletePlant(p._id)} style={{ background: 'transparent', color: '#ef4444', border: 'none', cursor: 'pointer' }}>Delete</button>
+                                    <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                                        <button onClick={() => triggerFileInput(p._id)} style={{ background: 'transparent', color: '#4ade80', border: '1px solid #4ade80', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}>Change Pic</button>
+                                        <button onClick={() => handleDeletePlant(p._id)} style={{ background: 'transparent', color: '#ef4444', border: '1px solid #ef4444', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}>Delete</button>
+                                    </div>
                                 </div>
                             ))}
                         </div>

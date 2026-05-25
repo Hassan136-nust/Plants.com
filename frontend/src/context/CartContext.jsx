@@ -21,7 +21,7 @@ export function CartProvider({ children }) {
     // 1. Fetch DB Cart aggressively on Login (or load guest cart)
     useEffect(() => {
         if (user && token) {
-            fetch('http://localhost:5000/api/cart', {
+            fetch('http://localhost:5001/api/cart', {
                 headers: { Authorization: `Bearer ${token}` }
             })
                 .then(r => r.json())
@@ -43,7 +43,7 @@ export function CartProvider({ children }) {
         localStorage.setItem(cartKey, JSON.stringify(cart));
 
         if (user && token) {
-            fetch('http://localhost:5000/api/cart', {
+            fetch('http://localhost:5001/api/cart', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

@@ -92,4 +92,31 @@ router.delete('/:id', protect, adminOnly, async (req, res) => {
     }
 });
 
+// @route   PUT /api/plants/:id
+// @desc    Update a plant (especially image)
+// @access  Private/Admin
+router.put('/:id', protect, adminOnly, upload.single('image'), async (req, res) => {
+    try {
+        const plant = await Plant.findById(req.params.id);
+        if (!plant) {
+            return res.status(404).json({ message: 'Plant not found' });
+        }
+
+        if (req.file) {
+            plant.imageUrl = `/uploads/plants/${req.file.filename}`;
+        }
+
+        if (req.body.name) plant.name = req.body.name;
+        if (req.body.scientificName) plant.scientificName = req.body.scientificName;
+        if (req.body.price) plant.price = req.body.price;
+        if (req.body.category) plant.category = req.body.category;
+        if (req.body.isCarousel !== undefined) plant.isCarousel = req.body.isCarousel === 'true' || req.body.isCarousel === true;
+
+        const updatedPlant = await plant.save();
+        res.json(updatedPlant);
+    } catch (err) {
+        res.status(500).json({ message: 'Server Error', error: err.message });
+    }
+});
+
 module.exports = router;

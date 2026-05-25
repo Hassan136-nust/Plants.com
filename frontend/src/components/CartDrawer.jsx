@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
-const API = 'http://localhost:5000/api';
+const API = 'http://localhost:5001/api';
 
 export default function CartDrawer() {
     const { isCartOpen, setIsCartOpen, cart, updateQuantity, removeFromCart, subtotal, itemsCount, clearCart } = useCart();

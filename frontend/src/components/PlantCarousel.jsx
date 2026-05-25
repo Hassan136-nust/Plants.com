@@ -10,7 +10,7 @@ const CAROUSEL_STYLES = [
     { bgGradient: 'linear-gradient(145deg, #1a3a2a 0%, #0a1e15 100%)', accentColor: '#34d399', shadowColor: 'rgba(52,211,153,0.25)' },
 ];
 
-const API = 'http://localhost:5000';
+const API = 'http://localhost:5001';
 
 export default function PlantCarousel() {
     const [plants, setPlants] = useState([]);
@@ -26,6 +26,13 @@ export default function PlantCarousel() {
             .then(data => {
                 const carouselPlants = data.filter(p => p.isCarousel).map((p, i) => {
                     const style = CAROUSEL_STYLES[i % CAROUSEL_STYLES.length];
+                    let url = p.imageUrl || '';
+                    if (url.startsWith('http')) url = url.replace(':5000', ':5001');
+                    else if (url.startsWith('/')) url = `${API}${url}`;
+                    else if (url && (url.endsWith('.jpg') || url.endsWith('.png'))) {
+                        if (!url.includes('/uploads/')) url = `${API}/uploads/plants/${url}`;
+                    }
+                    if (url !== p.imageUrl) console.warn('Carousel normalized imageUrl for', p.name, '->', url);
                     return {
                         id: p._id,
                         name: p.name,
@@ -33,7 +40,7 @@ export default function PlantCarousel() {
                         subtitle: p.category,
                         price: p.price,
                         tag: 'Featured',
-                        imageUrl: p.imageUrl.startsWith('/') ? `${API}${p.imageUrl}` : p.imageUrl,
+                        imageUrl: url,
                         ...style
                     };
                 });
@@ -132,9 +139,9 @@ export default function PlantCarousel() {
 
                         const xOffset = pos * 310;
                         const scale = isActive ? 1 : 0.72;
-                        const zDist = isActive ? 60 : 0;
-                        const rotY = pos * -22;
-                        const opacity = isActive ? 1 : 0.45;
+                        const zDist = isActive ? 40 : 0;
+                        const rotY = pos * -18;
+                        const opacity = isActive ? 1 : 0.5;
 
                         return (
                             <div
@@ -148,14 +155,14 @@ export default function PlantCarousel() {
                                     cursor: isActive ? 'default' : 'pointer',
                                     background: p.bgGradient,
                                     border: isActive
-                                        ? `1px solid ${p.accentColor}66`
-                                        : '1px solid rgba(255,255,255,0.08)',
+                                        ? `1px solid ${p.accentColor}44`
+                                        : '1px solid rgba(255,255,255,0.07)',
                                     boxShadow: isActive
-                                        ? `0 40px 80px rgba(0,0,0,0.7), 0 0 60px ${p.shadowColor}, inset 0 1px 0 rgba(255,255,255,0.08)`
-                                        : '0 20px 40px rgba(0,0,0,0.5)',
+                                        ? '0 32px 64px rgba(0,0,0,0.55), 0 8px 24px rgba(0,0,0,0.3)'
+                                        : '0 12px 32px rgba(0,0,0,0.4)',
                                     transform: `translateX(${xOffset}px) scale(${scale}) rotateY(${rotY}deg) translateZ(${zDist}px)`,
                                     opacity,
-                                    transition: 'all 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                                    transition: 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                                     zIndex: isActive ? 10 : 5,
                                     display: 'flex',
                                     flexDirection: 'column',
@@ -163,37 +170,45 @@ export default function PlantCarousel() {
                                     willChange: 'transform, opacity',
                                 }}
                             >
-                                {/* IMAGE DB PHOTO */}
+                                {/* IMAGE */}
                                 <div style={{
                                     flex: '1 1 0',
                                     position: 'relative',
-                                    background: `radial-gradient(ellipse at 50% 30%, ${p.accentColor}18 0%, rgba(0,0,0,0) 70%)`,
+                                    overflow: 'hidden',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    overflow: 'hidden',
                                 }}>
-                                    <div style={{
-                                        position: 'absolute',
-                                        width: '160px', height: '160px',
-                                        borderRadius: '50%',
-                                        background: `radial-gradient(circle, ${p.accentColor}30 0%, transparent 70%)`,
-                                        top: '50%', left: '50%',
-                                        transform: 'translate(-50%, -50%)',
-                                        animation: isActive ? 'pulseOrb 3s ease-in-out infinite' : 'none',
-                                    }} />
 
                                     <img
                                         src={p.imageUrl}
                                         alt={p.name}
+                                        loading="lazy"
                                         style={{
                                             position: 'relative', zIndex: 2,
                                             width: '100%', height: '100%', objectFit: 'cover',
-                                            opacity: isActive ? 1 : 0.8,
+                                            imageRendering: 'auto',
+                                            opacity: isActive ? 1 : 0.75,
                                             transition: 'opacity 0.5s ease',
-                                            WebkitBoxReflect: isActive ? 'below 0px linear-gradient(to bottom, rgba(0,0,0,0.0), rgba(0,0,0,0.4))' : 'none'
                                         }}
-                                        onError={(e) => e.target.style.display = 'none'}
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            console.warn('Carousel image failed:', e.target.src);
+                                            try {
+                                                const parts = (p.imageUrl || e.target.src || '').split('/');
+                                                const file = parts[parts.length - 1];
+                                                if (file) {
+                                                    const fallback = `${API}/uploads/plants/${file}`;
+                                                    if (e.target.src !== fallback) {
+                                                        e.target.src = fallback;
+                                                        return;
+                                                    }
+                                                }
+                                            } catch (err) { /* ignore */ }
+
+                                            const svg = encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='600' height='420'><rect width='100%' height='100%' fill='#0b2b1a'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#7fd08a' font-family='sans-serif' font-size='24'>Image unavailable</text></svg>`);
+                                            e.target.src = `data:image/svg+xml;charset=utf-8,${svg}`;
+                                        }}
                                     />
 
                                     {isActive && (
@@ -215,10 +230,9 @@ export default function PlantCarousel() {
                                 {/* CARD FOOTER */}
                                 {isActive && (
                                     <div style={{
-                                        padding: '22px 24px 24px',
-                                        background: 'rgba(0,0,0,0.6)',
-                                        backdropFilter: 'blur(15px)',
-                                        borderTop: `1px solid ${p.accentColor}22`,
+                                        padding: '20px 22px 22px',
+                                        background: 'rgba(0,0,0,0.55)',
+                                        borderTop: `1px solid rgba(255,255,255,0.07)`,
                                     }}>
                                         <div style={{
                                             fontSize: '10px', fontWeight: '700', color: p.accentColor,
@@ -247,19 +261,12 @@ export default function PlantCarousel() {
                                                     background: p.accentColor,
                                                     color: '#081d14', border: 'none',
                                                     padding: '11px 22px', borderRadius: '50px',
-                                                    fontWeight: '800', fontSize: '12px',
-                                                    cursor: 'pointer', letterSpacing: '0.5px',
-                                                    boxShadow: `0 6px 20px ${p.shadowColor}`,
-                                                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                                                    fontWeight: '700', fontSize: '13px',
+                                                    cursor: 'pointer', letterSpacing: '0.3px',
+                                                    transition: 'transform 0.2s ease, filter 0.2s ease',
                                                 }}
-                                                onMouseEnter={e => {
-                                                    e.currentTarget.style.transform = 'translateY(-2px) scale(1.04)';
-                                                    e.currentTarget.style.boxShadow = `0 10px 28px ${p.shadowColor}`;
-                                                }}
-                                                onMouseLeave={e => {
-                                                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                                    e.currentTarget.style.boxShadow = `0 6px 20px ${p.shadowColor}`;
-                                                }}
+                                                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.filter = 'brightness(1.1)'; }}
+                                                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.filter = 'brightness(1)'; }}
                                             >
                                                 Add to Cart
                                             </button>
@@ -336,10 +343,6 @@ export default function PlantCarousel() {
             </div>
 
             <style>{`
-        @keyframes pulseOrb {
-          0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
-          50% { transform: translate(-50%, -50%) scale(1.35); opacity: 0.9; }
-        }
         .carousel-toast { position:fixed; bottom:32px; left:50%; transform:translateX(-50%) translateY(20px); background:linear-gradient(135deg,#0f3322,#081d14); border:1px solid rgba(74,222,128,0.35); color:#fff; padding:14px 28px; border-radius:50px; font-size:14px; opacity:0; transition:all 0.4s ease; pointer-events:none; z-index:999; white-space:nowrap; }
         .carousel-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
       `}</style>

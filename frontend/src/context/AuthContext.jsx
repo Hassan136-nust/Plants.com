@@ -14,7 +14,7 @@ export function AuthProvider({ children }) {
     useEffect(() => {
         const stored = localStorage.getItem('zn_token');
         if (!stored) { setLoading(false); return; }
-        fetch('http://localhost:5000/api/auth/me', {
+        fetch('http://localhost:5001/api/auth/me', {
             headers: { Authorization: `Bearer ${stored}` },
         })
             .then(r => r.json())

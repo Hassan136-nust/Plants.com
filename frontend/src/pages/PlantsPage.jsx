@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
-const API = 'http://localhost:5000';
+const API = 'http://localhost:5001';
 
 export default function PlantsPage() {
     const [activeTab, setActiveTab] = useState('All');
+    const [searchQuery, setSearchQuery] = useState('');
     const [plants, setPlants] = useState([]);
     const [loading, setLoading] = useState(true);
     const [toast, setToast] = useState({ show: false, msg: '', success: true });
@@ -15,12 +16,36 @@ export default function PlantsPage() {
     useEffect(() => {
         fetch(`${API}/api/plants`)
             .then(r => r.json())
-            .then(data => { setPlants(data); setLoading(false); })
+            .then(data => {
+                const normalized = data.map(p => {
+                    let url = p.imageUrl || '';
+                    try {
+                        // if full http but wrong port (built/bundled value), rewrite to current API port
+                        if (url.startsWith('http')) {
+                            url = url.replace(':5000', ':5001');
+                        } else if (url.startsWith('/')) {
+                            url = `${API}${url}`;
+                        } else if (url && (url.endsWith('.jpg') || url.endsWith('.png') || url.endsWith('.jpeg') || url.endsWith('.webp'))) {
+                            // bare filename
+                            if (!url.includes('/uploads/')) url = `${API}/uploads/plants/${url}`;
+                        }
+                    } catch (err) { /* ignore */ }
+                    if (url !== p.imageUrl) console.warn('Normalized imageUrl for', p.name, '->', url);
+                    return { ...p, imageUrl: url };
+                });
+                setPlants(normalized); setLoading(false);
+            })
             .catch(err => { console.error(err); setLoading(false); });
     }, []);
 
     const categories = ['All', ...new Set(plants.map(p => p.category))];
-    const filtered = activeTab === 'All' ? plants : plants.filter(p => p.category === activeTab);
+    let filtered = activeTab === 'All' ? plants : plants.filter(p => p.category === activeTab);
+    if (searchQuery.trim()) {
+        filtered = filtered.filter(p =>
+            p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (p.scientificName && p.scientificName.toLowerCase().includes(searchQuery.toLowerCase()))
+        );
+    }
 
     const showToast = (msg, success = true) => {
         setToast({ show: true, msg, success });
@@ -51,6 +76,19 @@ export default function PlantsPage() {
 
             <section className="plants" style={{ paddingTop: '20px' }}>
                 <div className="container">
+                    <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center' }}>
+                        <input
+                            type="text"
+                            placeholder="🔍 Search for plants..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            style={{
+                                padding: '12px 20px', width: '100%', maxWidth: '400px',
+                                borderRadius: '50px', border: '1px solid rgba(255,255,255,0.1)',
+                                background: 'rgba(255,255,255,0.05)', color: '#fff', outline: 'none'
+                            }}
+                        />
+                    </div>
                     <div className="plant-filters">
                         {categories.map((cat) => (
                             <button
@@ -71,9 +109,29 @@ export default function PlantsPage() {
                                 <div key={plant._id} className="plant-card">
                                     <div className="plant-card-visual" style={{ padding: 0, overflow: 'hidden' }}>
                                         <img
-                                            src={plant.imageUrl.startsWith('/') ? `${API}${plant.imageUrl}` : plant.imageUrl}
+                                            src={plant.imageUrl && plant.imageUrl.startsWith('/') ? `${API}${plant.imageUrl}` : (plant.imageUrl || '')}
                                             alt={plant.name}
-                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                            loading="lazy"
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover', backgroundColor: '#0b2b1a' }}
+                                            onError={(e) => {
+                                                e.target.onerror = null;
+                                                console.warn('Image load failed, attempting fallback for', e.target.src);
+                                                try {
+                                                    const parts = (plant.imageUrl || e.target.src || '').split('/');
+                                                    const file = parts[parts.length - 1];
+                                                    if (file) {
+                                                        const fallback = `${API}/uploads/plants/${file}`;
+                                                        if (e.target.src !== fallback) {
+                                                            e.target.src = fallback;
+                                                            return;
+                                                        }
+                                                    }
+                                                } catch (err) { /* ignore */ }
+
+                                                // final inline SVG placeholder so the card isn't empty
+                                                const svg = encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='600' height='420'><rect width='100%' height='100%' fill='#0b2b1a'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#7fd08a' font-family='sans-serif' font-size='24'>Image unavailable</text></svg>`);
+                                                e.target.src = `data:image/svg+xml;charset=utf-8,${svg}`;
+                                            }}
                                         />
                                     </div>
                                     <div className="plant-card-info">

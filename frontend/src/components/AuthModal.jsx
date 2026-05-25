@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
-const API = 'http://localhost:5000/api';
+const API = 'http://localhost:5001/api';
 
 export default function AuthModal({ onClose, onSuccess, actionLabel = 'continue' }) {
     const [tab, setTab] = useState('login'); // 'login' | 'register'

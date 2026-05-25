@@ -33,7 +33,7 @@ export default function CheckoutPage() {
             // 1. Upload receipt
             const formData = new FormData();
             formData.append('receipt', receipt);
-            const uploadRes = await fetch('http://localhost:5000/api/upload', {
+            const uploadRes = await fetch('http://localhost:5001/api/upload', {
                 method: 'POST',
                 body: formData
             });
@@ -41,7 +41,7 @@ export default function CheckoutPage() {
             if (!uploadRes.ok) throw new Error(uploadData.message || 'Upload failed');
 
             // 2. Place Order
-            const orderRes = await fetch('http://localhost:5000/api/orders', {
+            const orderRes = await fetch('http://localhost:5001/api/orders', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
