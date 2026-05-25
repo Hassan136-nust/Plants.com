@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useCart } from '../context/CartContext';
 
 const CAROUSEL_STYLES = [
-    { bgGradient: 'linear-gradient(145deg, #1a4d2e 0%, #0d2b1a 100%)', accentColor: '#4ade80', shadowColor: 'rgba(74, 222, 128, 0.25)' },
-    { bgGradient: 'linear-gradient(145deg, #2d4a1e 0%, #162810 100%)', accentColor: '#86efac', shadowColor: 'rgba(134,239,172,0.25)' },
-    { bgGradient: 'linear-gradient(145deg, #3d5a1c 0%, #1e2e0e 100%)', accentColor: '#bef264', shadowColor: 'rgba(190,242,100,0.25)' },
-    { bgGradient: 'linear-gradient(145deg, #1b3a4b 0%, #0d1f2d 100%)', accentColor: '#67e8f9', shadowColor: 'rgba(103,232,249,0.25)' },
-    { bgGradient: 'linear-gradient(145deg, #3b1f4b 0%, #1e0e28 100%)', accentColor: '#e879f9', shadowColor: 'rgba(232,121,249,0.25)' },
-    { bgGradient: 'linear-gradient(145deg, #1a3a2a 0%, #0a1e15 100%)', accentColor: '#34d399', shadowColor: 'rgba(52,211,153,0.25)' },
+    { bgColor: '#ffffff', accentColor: '#16a34a', shadowColor: 'rgba(22, 163, 74, 0.15)' },
+    { bgColor: '#ffffff', accentColor: '#0891b2', shadowColor: 'rgba(8, 145, 178, 0.15)' },
+    { bgColor: '#ffffff', accentColor: '#d97706', shadowColor: 'rgba(217, 119, 6, 0.15)' },
+    { bgColor: '#ffffff', accentColor: '#db2777', shadowColor: 'rgba(219, 39, 119, 0.15)' },
+    { bgColor: '#ffffff', accentColor: '#7c3aed', shadowColor: 'rgba(124, 58, 237, 0.15)' },
+    { bgColor: '#ffffff', accentColor: '#059669', shadowColor: 'rgba(5, 150, 105, 0.15)' },
 ];
 
 const API = 'http://localhost:5001';
@@ -17,6 +17,8 @@ export default function PlantCarousel() {
     const [active, setActive] = useState(0);
     const [sliding, setSliding] = useState(false);
     const intervalRef = useRef(null);
+    const stageRef = useRef(null);
+    const pointer = useRef({ down: false, startX: 0, deltaX: 0 });
     const [toast, setToast] = useState({ show: false, msg: '' });
     const { addToCart } = useCart();
 
@@ -70,7 +72,7 @@ export default function PlantCarousel() {
         clearInterval(intervalRef.current);
         intervalRef.current = setInterval(() => {
             setActive(prev => (prev + 1) % plants.length);
-        }, 4000);
+        }, 4500);
     }, [plants.length]);
 
     useEffect(() => {
@@ -79,6 +81,43 @@ export default function PlantCarousel() {
         }
         return () => clearInterval(intervalRef.current);
     }, [resetInterval, plants.length]);
+
+    // Keyboard navigation
+    useEffect(() => {
+        const onKey = (e) => {
+            if (e.key === 'ArrowLeft') prev();
+            if (e.key === 'ArrowRight') next();
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [plants.length, active]);
+
+    // Pause/resume helpers
+    const pause = () => clearInterval(intervalRef.current);
+    const resume = () => resetInterval();
+
+    // Pointer (touch) handlers for swipe
+    const onPointerDown = (e) => {
+        pointer.current.down = true;
+        pointer.current.startX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+        pointer.current.deltaX = 0;
+        pause();
+    };
+    const onPointerMove = (e) => {
+        if (!pointer.current.down) return;
+        const x = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+        pointer.current.deltaX = x - pointer.current.startX;
+    };
+    const onPointerUp = () => {
+        if (!pointer.current.down) return;
+        pointer.current.down = false;
+        const dx = pointer.current.deltaX;
+        if (Math.abs(dx) > 60) {
+            if (dx > 0) prev(); else next();
+        }
+        pointer.current.deltaX = 0;
+        resume();
+    };
 
     const goTo = (idx) => {
         if (idx === active || sliding || plants.length === 0) return;
@@ -122,13 +161,17 @@ export default function PlantCarousel() {
                 </div>
 
                 {/* CAROUSEL STAGE */}
-                <div style={{
+                <div ref={stageRef} onMouseEnter={pause} onMouseLeave={resume}
+                    onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
+                    onTouchStart={onPointerDown} onTouchMove={onPointerMove} onTouchEnd={onPointerUp}
+                    role="region" aria-label="Featured plants carousel"
+                    style={{
                     position: 'relative',
-                    height: '520px',
+                    height: '680px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    perspective: '1400px',
+                    perspective: '2000px',
                 }}>
                     {plants.map((p, idx) => {
                         const pos = getPos(idx);
@@ -137,11 +180,11 @@ export default function PlantCarousel() {
 
                         if (!visible) return null;
 
-                        const xOffset = pos * 310;
-                        const scale = isActive ? 1 : 0.72;
-                        const zDist = isActive ? 40 : 0;
-                        const rotY = pos * -18;
-                        const opacity = isActive ? 1 : 0.5;
+                        const xOffset = pos * 420;
+                        const scale = isActive ? 1 : 0.85;
+                        const zDist = isActive ? 0 : -100;
+                        const rotY = pos * -12;
+                        const opacity = isActive ? 1 : 0.4;
 
                         return (
                             <div
@@ -149,20 +192,20 @@ export default function PlantCarousel() {
                                 onClick={() => !isActive && goTo(idx)}
                                 style={{
                                     position: 'absolute',
-                                    width: '300px',
-                                    height: isActive ? '480px' : '360px',
+                                    width: '400px',
+                                    height: isActive ? '620px' : '520px',
                                     borderRadius: '24px',
                                     cursor: isActive ? 'default' : 'pointer',
-                                    background: p.bgGradient,
+                                    background: p.bgColor,
                                     border: isActive
-                                        ? `1px solid ${p.accentColor}44`
-                                        : '1px solid rgba(255,255,255,0.07)',
+                                        ? `3px solid ${p.accentColor}`
+                                        : '2px solid #e5e7eb',
                                     boxShadow: isActive
-                                        ? '0 32px 64px rgba(0,0,0,0.55), 0 8px 24px rgba(0,0,0,0.3)'
-                                        : '0 12px 32px rgba(0,0,0,0.4)',
+                                        ? `0 40px 80px rgba(0,0,0,0.12), 0 12px 32px ${p.shadowColor}`
+                                        : '0 8px 16px rgba(0,0,0,0.06)',
                                     transform: `translateX(${xOffset}px) scale(${scale}) rotateY(${rotY}deg) translateZ(${zDist}px)`,
                                     opacity,
-                                    transition: 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                                    transition: 'all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1)',
                                     zIndex: isActive ? 10 : 5,
                                     display: 'flex',
                                     flexDirection: 'column',
@@ -172,12 +215,14 @@ export default function PlantCarousel() {
                             >
                                 {/* IMAGE */}
                                 <div style={{
-                                    flex: '1 1 0',
+                                    height: isActive ? '420px' : '340px',
                                     position: 'relative',
                                     overflow: 'hidden',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
+                                    background: '#f9fafb',
+                                    borderRadius: '20px 20px 0 0',
                                 }}>
 
                                     <img
@@ -185,11 +230,15 @@ export default function PlantCarousel() {
                                         alt={p.name}
                                         loading="lazy"
                                         style={{
-                                            position: 'relative', zIndex: 2,
-                                            width: '100%', height: '100%', objectFit: 'cover',
-                                            imageRendering: 'auto',
-                                            opacity: isActive ? 1 : 0.75,
-                                            transition: 'opacity 0.5s ease',
+                                            width: '100%', 
+                                            height: '100%', 
+                                            objectFit: 'cover',
+                                            imageRendering: '-webkit-optimize-contrast',
+                                            WebkitFontSmoothing: 'antialiased',
+                                            MozOsxFontSmoothing: 'grayscale',
+                                            filter: 'none',
+                                            opacity: 1,
+                                            transition: 'transform 0.6s ease',
                                         }}
                                         onError={(e) => {
                                             e.target.onerror = null;
@@ -213,14 +262,14 @@ export default function PlantCarousel() {
 
                                     {isActive && (
                                         <div style={{
-                                            position: 'absolute', top: '18px', left: '18px', zIndex: 10,
-                                            background: `${p.accentColor}20`,
-                                            border: `1px solid ${p.accentColor}60`,
-                                            color: p.accentColor,
-                                            fontSize: '10px', fontWeight: '800',
-                                            textTransform: 'uppercase', letterSpacing: '1.5px',
-                                            padding: '5px 14px', borderRadius: '30px',
-                                            backdropFilter: 'blur(8px)',
+                                            position: 'absolute', top: '20px', left: '20px', zIndex: 10,
+                                            background: p.accentColor,
+                                            border: 'none',
+                                            color: '#ffffff',
+                                            fontSize: '11px', fontWeight: '700',
+                                            textTransform: 'uppercase', letterSpacing: '1.2px',
+                                            padding: '8px 18px', borderRadius: '8px',
+                                            boxShadow: `0 4px 12px ${p.shadowColor}`,
                                         }}>
                                             {p.tag}
                                         </div>
@@ -230,43 +279,61 @@ export default function PlantCarousel() {
                                 {/* CARD FOOTER */}
                                 {isActive && (
                                     <div style={{
-                                        padding: '20px 22px 22px',
-                                        background: 'rgba(0,0,0,0.55)',
-                                        borderTop: `1px solid rgba(255,255,255,0.07)`,
+                                        padding: '28px 28px 32px',
+                                        background: '#ffffff',
+                                        borderTop: '1px solid #f3f4f6',
                                     }}>
                                         <div style={{
-                                            fontSize: '10px', fontWeight: '700', color: p.accentColor,
-                                            textTransform: 'uppercase', letterSpacing: '2.5px', marginBottom: '5px',
+                                            fontSize: '11px', fontWeight: '700', color: p.accentColor,
+                                            textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '8px',
                                         }}>
                                             {p.subtitle}
                                         </div>
                                         <h3 style={{
-                                            fontFamily: 'var(--font-serif)', fontSize: '21px',
-                                            color: '#ffffff', fontWeight: '700', marginBottom: '18px',
+                                            fontFamily: 'var(--font-serif)', fontSize: '28px',
+                                            color: '#111827', fontWeight: '700', marginBottom: '24px',
+                                            lineHeight: '1.2',
                                         }}>
                                             {p.name}
                                         </h3>
                                         <div style={{
                                             display: 'flex', alignItems: 'center',
                                             justifyContent: 'space-between',
-                                            borderTop: `1px solid ${p.accentColor}25`,
-                                            paddingTop: '16px',
+                                            paddingTop: '20px',
+                                            borderTop: '1px solid #e5e7eb',
                                         }}>
-                                            <span style={{ fontSize: '26px', fontWeight: '900', color: '#f8db7d', fontFamily: 'var(--font-serif)' }}>
+                                            <span style={{ 
+                                                fontSize: '32px', 
+                                                fontWeight: '800', 
+                                                color: '#111827', 
+                                                fontFamily: 'var(--font-sans)',
+                                                letterSpacing: '-0.5px',
+                                            }}>
                                                 {p.price}
                                             </span>
                                             <button
                                                 onClick={() => handleAddToCart(p)}
                                                 style={{
                                                     background: p.accentColor,
-                                                    color: '#081d14', border: 'none',
-                                                    padding: '11px 22px', borderRadius: '50px',
-                                                    fontWeight: '700', fontSize: '13px',
-                                                    cursor: 'pointer', letterSpacing: '0.3px',
-                                                    transition: 'transform 0.2s ease, filter 0.2s ease',
+                                                    color: '#ffffff', 
+                                                    border: 'none',
+                                                    padding: '14px 32px', 
+                                                    borderRadius: '12px',
+                                                    fontWeight: '700', 
+                                                    fontSize: '14px',
+                                                    cursor: 'pointer', 
+                                                    letterSpacing: '0.3px',
+                                                    transition: 'all 0.2s ease',
+                                                    boxShadow: `0 4px 12px ${p.shadowColor}`,
                                                 }}
-                                                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.filter = 'brightness(1.1)'; }}
-                                                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.filter = 'brightness(1)'; }}
+                                                onMouseEnter={e => { 
+                                                    e.currentTarget.style.transform = 'translateY(-2px)'; 
+                                                    e.currentTarget.style.boxShadow = `0 8px 24px ${p.shadowColor}`;
+                                                }}
+                                                onMouseLeave={e => { 
+                                                    e.currentTarget.style.transform = 'translateY(0)'; 
+                                                    e.currentTarget.style.boxShadow = `0 4px 12px ${p.shadowColor}`;
+                                                }}
                                             >
                                                 Add to Cart
                                             </button>
@@ -281,35 +348,49 @@ export default function PlantCarousel() {
                 {/* CONTROLS */}
                 <div style={{
                     display: 'flex', justifyContent: 'center', alignItems: 'center',
-                    gap: '20px', marginTop: '52px',
+                    gap: '24px', marginTop: '60px',
                 }}>
                     <button
                         onClick={prev}
                         style={{
-                            width: '48px', height: '48px', borderRadius: '50%',
-                            border: '1px solid rgba(255,255,255,0.2)',
-                            background: 'rgba(255,255,255,0.05)',
+                            width: '56px', height: '56px', borderRadius: '50%',
+                            border: '2px solid rgba(255,255,255,0.15)',
+                            background: 'rgba(255,255,255,0.08)',
                             color: '#fff', cursor: 'pointer',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            transition: 'all 0.25s ease', backdropFilter: 'blur(10px)',
+                            transition: 'all 0.3s ease', backdropFilter: 'blur(12px)',
+                        }}
+                        onMouseEnter={e => {
+                            e.currentTarget.style.background = plant.accentColor;
+                            e.currentTarget.style.borderColor = plant.accentColor;
+                            e.currentTarget.style.transform = 'scale(1.1)';
+                        }}
+                        onMouseLeave={e => {
+                            e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+                            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
+                            e.currentTarget.style.transform = 'scale(1)';
                         }}
                     >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                             <path d="M19 12H5M12 5l-7 7 7 7" />
                         </svg>
                     </button>
 
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                         {plants.map((p, idx) => (
                             <button
                                 key={idx}
                                 onClick={() => goTo(idx)}
                                 style={{
-                                    width: active === idx ? '30px' : '8px', height: '8px',
-                                    borderRadius: '50px', border: 'none', padding: 0, cursor: 'pointer',
-                                    background: active === idx ? plant.accentColor : 'rgba(255,255,255,0.22)',
-                                    boxShadow: active === idx ? `0 0 12px ${plant.accentColor}` : 'none',
-                                    transition: 'all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                                    width: active === idx ? '40px' : '10px', 
+                                    height: '10px',
+                                    borderRadius: '50px', 
+                                    border: 'none', 
+                                    padding: 0, 
+                                    cursor: 'pointer',
+                                    background: active === idx ? plant.accentColor : 'rgba(255,255,255,0.25)',
+                                    boxShadow: active === idx ? `0 0 16px ${plant.shadowColor}` : 'none',
+                                    transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
                                 }}
                             />
                         ))}
@@ -318,24 +399,34 @@ export default function PlantCarousel() {
                     <button
                         onClick={next}
                         style={{
-                            width: '48px', height: '48px', borderRadius: '50%',
-                            border: '1px solid rgba(255,255,255,0.2)',
-                            background: 'rgba(255,255,255,0.05)',
+                            width: '56px', height: '56px', borderRadius: '50%',
+                            border: '2px solid rgba(255,255,255,0.15)',
+                            background: 'rgba(255,255,255,0.08)',
                             color: '#fff', cursor: 'pointer',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            transition: 'all 0.25s ease', backdropFilter: 'blur(10px)',
+                            transition: 'all 0.3s ease', backdropFilter: 'blur(12px)',
+                        }}
+                        onMouseEnter={e => {
+                            e.currentTarget.style.background = plant.accentColor;
+                            e.currentTarget.style.borderColor = plant.accentColor;
+                            e.currentTarget.style.transform = 'scale(1.1)';
+                        }}
+                        onMouseLeave={e => {
+                            e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+                            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
+                            e.currentTarget.style.transform = 'scale(1)';
                         }}
                     >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                             <path d="M5 12h14M12 5l7 7-7 7" />
                         </svg>
                     </button>
                 </div>
 
                 <div style={{
-                    textAlign: 'center', marginTop: '18px',
-                    fontFamily: 'var(--font-sans)', fontSize: '13px',
-                    color: 'rgba(255,255,255,0.3)', letterSpacing: '3px',
+                    textAlign: 'center', marginTop: '24px',
+                    fontFamily: 'var(--font-sans)', fontSize: '14px',
+                    color: 'rgba(255,255,255,0.4)', letterSpacing: '2px',
                     fontWeight: '600',
                 }}>
                     {String(active + 1).padStart(2, '0')}&nbsp;&nbsp;/&nbsp;&nbsp;{String(plants.length).padStart(2, '0')}
