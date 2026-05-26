@@ -1,82 +1,68 @@
-# 🌿 Zia Nursery — Full-Stack Plant E-Commerce
+<div align="center">
 
-A full-stack plant nursery e-commerce app built with React, Node.js/Express, MongoDB, and deployed on Vercel.
+# 🌿 Zia Nursery
 
-**Live:** [zia-nursery.vercel.app](https://zia-nursery.vercel.app)
+### A full-stack plant e-commerce web app
+
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-zia--nursery.vercel.app-4ade80?style=for-the-badge&logo=vercel&logoColor=white)](https://zia-nursery.vercel.app)
+[![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
+[![Node.js](https://img.shields.io/badge/Node.js-Express-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://mongodb.com)
+[![Cloudinary](https://img.shields.io/badge/Cloudinary-Images-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)](https://cloudinary.com)
+
+</div>
 
 ---
 
-## Tech Stack
+## ✨ Features
 
-| Layer | Technology |
+| Feature | Description |
 |---|---|
-| Frontend | React 18, Vite, React Router |
-| Backend | Node.js, Express |
-| Database | MongoDB Atlas (Mongoose) |
-| Image Storage | Cloudinary |
-| Deployment | Vercel (monorepo — frontend + serverless API) |
-| Auth | JWT (jsonwebtoken + bcryptjs) |
+| 🛍️ **Plant Catalogue** | Browse, search and filter plants by category |
+| 🎠 **3D Carousel** | Animated featured plants showcase on homepage |
+| 🛒 **Smart Cart** | Persistent cart — synced to DB for logged-in users, localStorage for guests. Prices always refreshed from DB on load |
+| 💳 **Checkout** | 70% advance payment via Easypaisa/Jazzcash with receipt upload |
+| 🔐 **Auth** | JWT register/login with role-based access (user / admin) |
+| 🌱 **Admin CMS** | Add/edit/delete plants with Cloudinary image upload |
+| 📋 **Order Management** | Admin can view full order details, items, delivery info and confirm orders |
+| 📦 **My Orders** | Customers can track their order history and status |
 
 ---
 
-## Features
-
-- **Plant catalogue** — browse, search, and filter by category
-- **3D carousel** — featured plants showcase on the homepage
-- **Cart** — persistent cart synced to DB for logged-in users, localStorage for guests. Prices always fetched fresh from DB on load to prevent stale data
-- **Checkout** — 70% advance payment flow with Easypaisa/Jazzcash receipt upload (stored on Cloudinary)
-- **Auth** — register/login with JWT, role-based access (user / admin)
-- **Admin dashboard** — manage orders (view items, delivery info, confirm), manage plant inventory (add/edit/delete with Cloudinary image upload)
-- **Contact form** — customer enquiry route
-
----
-
-## Project Structure
+## 🖥️ Tech Stack
 
 ```
-Plants.com/
-├── api/
-│   └── index.js          # Vercel serverless entry — wraps Express app
-├── backend/
-│   ├── models/           # Mongoose models (User, Plant, Order)
-│   ├── routes/           # Express routes (auth, plants, orders, cart, upload, contact)
-│   ├── middleware/        # JWT auth middleware
-│   └── server.js         # Express app setup
-├── frontend/
-│   ├── src/
-│   │   ├── components/   # Navbar, Footer, CartDrawer, PlantCarousel, AuthModal
-│   │   ├── context/      # AuthContext, CartContext
-│   │   ├── pages/        # Home, Plants, Checkout, Admin, MyOrders, About, Contact
-│   │   └── utils/        # price.js helpers
-│   └── index.html
-├── vercel.json           # Routing: /api/* → serverless, /* → SPA
-└── package.json          # Root — contains all backend dependencies for Vercel
+Frontend          Backend           Infrastructure
+─────────         ─────────         ──────────────
+React 18          Node.js           Vercel (monorepo)
+Vite              Express           MongoDB Atlas
+React Router      Mongoose          Cloudinary
+Context API       JWT / bcryptjs    multer-storage-cloudinary
 ```
 
 ---
 
-## Local Development
+## 🚀 Quick Start
 
 ### Prerequisites
 - Node.js 18+
-- MongoDB Atlas account (or local MongoDB)
+- MongoDB Atlas account
 - Cloudinary account (free tier)
 
-### 1. Clone and install
+### 1. Clone & install
 
 ```bash
 git clone <repo-url>
 cd Plants.com
-npm run install-all   # installs both backend and frontend deps
+npm run install-all
 ```
 
 ### 2. Configure environment
 
-Create `backend/.env`:
-
+**`backend/.env`**
 ```env
 MONGO_URI=mongodb+srv://<user>:<pass>@cluster.mongodb.net/plants
-JWT_SECRET=your_jwt_secret_here
+JWT_SECRET=your_secure_secret_here
 PORT=5001
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
@@ -84,8 +70,7 @@ CLOUDINARY_API_SECRET=your_api_secret
 FRONTEND_URL=http://localhost:5173
 ```
 
-Create `frontend/.env.local`:
-
+**`frontend/.env.local`**
 ```env
 VITE_API_URL=http://localhost:5001
 ```
@@ -100,37 +85,89 @@ cd backend && npm run dev
 cd frontend && npm run dev
 ```
 
-Frontend: `http://localhost:5173` — Backend: `http://localhost:5001`
+- Frontend → `http://localhost:5173`
+- Backend → `http://localhost:5001`
 
 ---
 
-## Deployment (Vercel)
+## 📁 Project Structure
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for the full step-by-step guide.
+```
+Plants.com/
+├── api/
+│   └── index.js              # Vercel serverless entry (wraps Express)
+├── backend/
+│   ├── models/
+│   │   ├── User.js           # User schema (with embedded cart)
+│   │   ├── Plant.js          # Plant schema
+│   │   └── Order.js          # Order schema (items + priceNum)
+│   ├── routes/
+│   │   ├── auth.js           # Register / Login / Me
+│   │   ├── plants.js         # CRUD + Cloudinary upload
+│   │   ├── orders.js         # Place order / admin view / confirm
+│   │   ├── cart.js           # Sync cart to DB
+│   │   ├── upload.js         # Receipt upload → Cloudinary
+│   │   └── contact.js        # Contact form
+│   ├── middleware/
+│   │   └── auth.js           # JWT protect middleware
+│   └── server.js             # Express app + MongoDB connect
+├── frontend/
+│   └── src/
+│       ├── components/       # Navbar, Footer, CartDrawer, PlantCarousel, AuthModal, Layout
+│       ├── context/          # AuthContext, CartContext
+│       ├── pages/            # Home, Plants, Checkout, Admin, MyOrders, About, Contact
+│       └── utils/
+│           └── price.js      # parsePrice / formatRupee helpers
+├── vercel.json               # Routes: /api/* → serverless, /* → SPA fallback
+└── package.json              # Root — backend deps for Vercel install
+```
+
+---
+
+## ☁️ Deployment
+
+See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for the full step-by-step Vercel guide.
 
 **Required Vercel environment variables:**
 
-| Variable | Description |
+| Variable | Where to get it |
 |---|---|
-| `MONGO_URI` | MongoDB Atlas connection string |
+| `MONGO_URI` | MongoDB Atlas → Connect → Drivers |
 | `JWT_SECRET` | Any secure random string |
-| `CLOUDINARY_CLOUD_NAME` | From Cloudinary dashboard |
-| `CLOUDINARY_API_KEY` | From Cloudinary dashboard |
-| `CLOUDINARY_API_SECRET` | From Cloudinary dashboard |
-| `FRONTEND_URL` | `https://zia-nursery.vercel.app` |
-| `VITE_API_URL` | `https://zia-nursery.vercel.app` |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary Dashboard |
+| `CLOUDINARY_API_KEY` | Cloudinary Dashboard |
+| `CLOUDINARY_API_SECRET` | Cloudinary Dashboard |
+| `FRONTEND_URL` | Your Vercel deployment URL |
+| `VITE_API_URL` | Your Vercel deployment URL |
+
+> ⚠️ After adding env vars, you must **redeploy** — Vercel doesn't auto-redeploy on env changes.
 
 ---
 
-## Admin Access
+## 🔑 Admin Access
 
-Set a user's `role` field to `"admin"` directly in MongoDB Atlas to grant admin access. The admin panel is at `/admin`.
+To make a user an admin, set their `role` field to `"admin"` directly in MongoDB Atlas. The admin panel is accessible at `/admin`.
 
 ---
 
-## Key Design Decisions
+## 🏗️ Key Architecture Decisions
 
-- **Monorepo on Vercel** — `api/index.js` wraps the Express app as a single serverless function. `vercel.json` routes all `/api/*` traffic to it and falls back to `index.html` for the SPA via `"handle": "filesystem"`.
-- **Cloudinary for uploads** — Vercel's filesystem is read-only, so `multer` disk storage doesn't work. Both plant images and payment receipts upload directly to Cloudinary via `multer-storage-cloudinary`.
-- **Cart price integrity** — On every page load, `CartContext` fetches the live plant catalogue and patches all cart items with fresh prices (by ID, with name-based fallback for post-reseed scenarios). This prevents stale/corrupted prices from localStorage ever reaching checkout.
-- **Price parsing** — All prices are stored as strings like `"Rs. 2,500"` in MongoDB. `parsePrice()` in `utils/price.js` strips non-numeric characters and returns a plain number. No scaling logic.
+**Monorepo on Vercel**
+`api/index.js` wraps the Express app as a single serverless function. `vercel.json` routes all `/api/*` traffic to it, uses `"handle": "filesystem"` to serve static assets, then falls back to `index.html` for React Router.
+
+**Cloudinary for all uploads**
+Vercel's filesystem is read-only — `multer` disk storage fails silently. Both plant images and payment receipts go directly to Cloudinary via `multer-storage-cloudinary` and are stored as permanent URLs.
+
+**Cart price integrity**
+On every page load, `CartContext` fetches the live plant catalogue from `/api/plants` and patches all cart items with fresh prices — by ID first, then by name as a fallback (handles post-reseed ID changes). This means `item.plant.price` is always the current DB value by the time anything renders.
+
+**Order amount accuracy**
+Each order item stores both `price` (original string e.g. `"Rs. 2,500"`) and `priceNum` (parsed integer `2500`). The backend recalculates `totalAmount` server-side on every order, stripping currency symbols before parsing.
+
+---
+
+<div align="center">
+
+Made with 🌱 by Hassan
+
+</div>
