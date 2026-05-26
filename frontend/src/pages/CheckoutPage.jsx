@@ -156,10 +156,14 @@ export default function CheckoutPage() {
                         <button
                             type="submit"
                             disabled={loading}
-                            style={{ background: '#4ade80', color: '#000', border: 'none', padding: '16px', borderRadius: '50px', fontSize: '16px', fontWeight: 'bold', cursor: loading ? 'wait' : 'pointer', marginTop: '16px' }}
+                            style={{ background: loading ? '#2d7a4f' : '#4ade80', color: '#000', border: 'none', padding: '16px', borderRadius: '50px', fontSize: '16px', fontWeight: 'bold', cursor: loading ? 'not-allowed' : 'pointer', marginTop: '16px', opacity: loading ? 0.85 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', transition: 'all 0.2s' }}
                         >
-                            {loading ? 'Processing Order...' : 'Confirm Order'}
+                            {loading && (
+                                <span style={{ display: 'inline-block', width: '18px', height: '18px', border: '2px solid #000', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />
+                            )}
+                            {loading ? 'Uploading & Placing Order...' : 'Confirm Order'}
                         </button>
+                        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
                     </form>
                 </div>
 
