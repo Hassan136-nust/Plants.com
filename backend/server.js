@@ -24,8 +24,13 @@ app.use(cors({
     origin: function (origin, callback) {
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
-        
-        if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.vercel.app')) {
+
+        const isAllowed =
+            allowedOrigins.indexOf(origin) !== -1 ||
+            /\.vercel\.app$/i.test(origin) ||
+            /localhost:\d+$/i.test(origin);
+
+        if (isAllowed) {
             callback(null, true);
         } else {
             callback(new Error('Not allowed by CORS'));
@@ -62,15 +67,19 @@ app.use((req, res) => {
 // ─── DB CONNECTION → START SERVER ─────────────────────────────────────────────
 const PORT = process.env.PORT || 5001;
 
-// Connect to MongoDB
-mongoose
-    .connect(process.env.MONGO_URI)
-    .then(() => {
-        console.log('✅ Connected to MongoDB Atlas');
-    })
-    .catch((err) => {
-        console.error('❌ MongoDB connection failed:', err.message);
-    });
+// Connect to MongoDB (Safe Serverless check)
+if (process.env.MONGO_URI) {
+    mongoose
+        .connect(process.env.MONGO_URI)
+        .then(() => {
+            console.log('✅ Connected to MongoDB Atlas');
+        })
+        .catch((err) => {
+            console.error('❌ MongoDB connection failed:', err.message);
+        });
+} else {
+    console.warn('⚠️ MONGO_URI environment variable is missing.');
+}
 
 // Only start server if not in Vercel serverless environment
 if (process.env.VERCEL !== '1') {
