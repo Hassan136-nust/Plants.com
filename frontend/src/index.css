@@ -2147,3 +2147,56 @@ input[type="file"]::file-selector-button:hover {
     max-width: 100%;
   }
 }
+
+
+/* ── Mobile Navbar fixes ─────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+    .nav-container {
+        padding: 0 16px;
+        height: 68px;
+    }
+
+    /* Hide greeting text "Hi, Hassan" on small screens */
+    .nav-greeting {
+        display: none;
+    }
+
+    /* Compress auth button row */
+    .btn-nav-wrapper {
+        gap: 6px !important;
+    }
+
+    .btn-nav-wrapper > div {
+        gap: 5px !important;
+    }
+
+    /* Shrink My Orders / Admin / Logout buttons */
+    .btn-nav-wrapper a,
+    .btn-nav-wrapper button:not([aria-label]) {
+        padding: 5px 8px !important;
+        font-size: 11px !important;
+    }
+
+    /* Keep cart button a fixed size, never shrink */
+    .btn-nav-wrapper > button:last-child {
+        width: 38px !important;
+        height: 38px !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Logo text — slightly smaller */
+    .logo-main { font-size: 18px; }
+    .logo-sub  { font-size: 9px; letter-spacing: 3px; }
+}
+
+@media (max-width: 400px) {
+    /* On very small phones hide My Orders text, show icon only */
+    .btn-nav-wrapper a[href="/my-orders"] {
+        font-size: 0 !important;
+        padding: 6px 8px !important;
+    }
+    .btn-nav-wrapper a[href="/my-orders"]::before {
+        content: '📋';
+        font-size: 14px;
+    }
+}

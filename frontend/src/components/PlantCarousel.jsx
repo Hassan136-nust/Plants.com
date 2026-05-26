@@ -150,13 +150,13 @@ export default function PlantCarousel() {
 
     return (
         <section style={{
-            padding: '120px 0 80px',
+            padding: 'clamp(80px, 12vw, 120px) 0 clamp(40px, 8vw, 80px)',
             background: 'linear-gradient(180deg, #0b2218 0%, #081d14 100%)',
             overflow: 'hidden',
         }}>
             <div className="container">
                 {/* Header */}
-                <div style={{ textAlign: 'center', marginBottom: '70px' }}>
+                <div style={{ textAlign: 'center', marginBottom: 'clamp(32px, 6vw, 70px)' }}>
                     <div className="section-eyebrow">Plant Showcase</div>
                     <h2 className="section-title" style={{ marginBottom: '14px' }}>
                         Our <em>Featured</em> Collection
@@ -172,13 +172,13 @@ export default function PlantCarousel() {
                     onTouchStart={onPointerDown} onTouchMove={onPointerMove} onTouchEnd={onPointerUp}
                     role="region" aria-label="Featured plants carousel"
                     style={{
-                    position: 'relative',
-                    height: '680px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    perspective: '2000px',
-                }}>
+                        position: 'relative',
+                        height: 'clamp(480px, 72vw, 680px)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        perspective: '2000px',
+                    }}>
                     {plants.map((p, idx) => {
                         const pos = getPos(idx);
                         const isActive = pos === 0;
@@ -186,6 +186,7 @@ export default function PlantCarousel() {
 
                         if (!visible) return null;
 
+                        // On mobile hide side cards entirely — only show active
                         const xOffset = pos * 420;
                         const scale = isActive ? 1 : 0.85;
                         const zDist = isActive ? 0 : -100;
@@ -196,16 +197,15 @@ export default function PlantCarousel() {
                             <div
                                 key={p.id}
                                 onClick={() => !isActive && goTo(idx)}
+                                className={!isActive ? 'carousel-side-card' : ''}
                                 style={{
                                     position: 'absolute',
-                                    width: '400px',
-                                    height: isActive ? '620px' : '520px',
+                                    width: 'min(88vw, 400px)',
+                                    height: isActive ? 'clamp(420px, 68vw, 620px)' : 'clamp(340px, 56vw, 520px)',
                                     borderRadius: '24px',
                                     cursor: isActive ? 'default' : 'pointer',
                                     background: p.bgColor,
-                                    border: isActive
-                                        ? `3px solid ${p.accentColor}`
-                                        : '2px solid #e5e7eb',
+                                    border: isActive ? `3px solid ${p.accentColor}` : '2px solid #e5e7eb',
                                     boxShadow: isActive
                                         ? `0 40px 80px rgba(0,0,0,0.12), 0 12px 32px ${p.shadowColor}`
                                         : '0 8px 16px rgba(0,0,0,0.06)',
@@ -221,7 +221,7 @@ export default function PlantCarousel() {
                             >
                                 {/* IMAGE */}
                                 <div style={{
-                                    height: isActive ? '420px' : '340px',
+                                    height: isActive ? 'clamp(240px, 44vw, 420px)' : 'clamp(200px, 36vw, 340px)',
                                     position: 'relative',
                                     overflow: 'hidden',
                                     display: 'flex',
@@ -229,6 +229,7 @@ export default function PlantCarousel() {
                                     justifyContent: 'center',
                                     background: '#f9fafb',
                                     borderRadius: '20px 20px 0 0',
+                                    flexShrink: 0,
                                 }}>
 
                                     <img
@@ -285,35 +286,46 @@ export default function PlantCarousel() {
                                 {/* CARD FOOTER */}
                                 {isActive && (
                                     <div style={{
-                                        padding: '28px 28px 32px',
+                                        padding: 'clamp(16px, 4vw, 28px) clamp(16px, 4vw, 28px) clamp(20px, 4vw, 32px)',
                                         background: '#ffffff',
                                         borderTop: '1px solid #f3f4f6',
+                                        flex: 1,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        justifyContent: 'space-between',
                                     }}>
-                                        <div style={{
-                                            fontSize: '11px', fontWeight: '700', color: p.accentColor,
-                                            textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '8px',
-                                        }}>
-                                            {p.subtitle}
+                                        <div>
+                                            <div style={{
+                                                fontSize: '11px', fontWeight: '700', color: p.accentColor,
+                                                textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '6px',
+                                            }}>
+                                                {p.subtitle}
+                                            </div>
+                                            <h3 style={{
+                                                fontFamily: 'var(--font-serif)',
+                                                fontSize: 'clamp(18px, 5vw, 28px)',
+                                                color: '#111827', fontWeight: '700',
+                                                marginBottom: '0',
+                                                lineHeight: '1.2',
+                                            }}>
+                                                {p.name}
+                                            </h3>
                                         </div>
-                                        <h3 style={{
-                                            fontFamily: 'var(--font-serif)', fontSize: '28px',
-                                            color: '#111827', fontWeight: '700', marginBottom: '24px',
-                                            lineHeight: '1.2',
-                                        }}>
-                                            {p.name}
-                                        </h3>
                                         <div style={{
                                             display: 'flex', alignItems: 'center',
                                             justifyContent: 'space-between',
-                                            paddingTop: '20px',
+                                            paddingTop: 'clamp(12px, 3vw, 20px)',
+                                            marginTop: 'clamp(12px, 3vw, 20px)',
                                             borderTop: '1px solid #e5e7eb',
+                                            gap: '10px',
                                         }}>
-                                            <span style={{ 
-                                                fontSize: '32px', 
-                                                fontWeight: '800', 
-                                                color: '#111827', 
+                                            <span style={{
+                                                fontSize: 'clamp(20px, 6vw, 32px)',
+                                                fontWeight: '800',
+                                                color: '#111827',
                                                 fontFamily: 'var(--font-sans)',
                                                 letterSpacing: '-0.5px',
+                                                flexShrink: 0,
                                             }}>
                                                 {formatRupee(p.price)}
                                             </span>
@@ -321,23 +333,25 @@ export default function PlantCarousel() {
                                                 onClick={() => handleAddToCart(p)}
                                                 style={{
                                                     background: p.accentColor,
-                                                    color: '#ffffff', 
+                                                    color: '#ffffff',
                                                     border: 'none',
-                                                    padding: '14px 32px', 
+                                                    padding: 'clamp(10px, 2.5vw, 14px) clamp(14px, 4vw, 28px)',
                                                     borderRadius: '12px',
-                                                    fontWeight: '700', 
-                                                    fontSize: '14px',
-                                                    cursor: 'pointer', 
+                                                    fontWeight: '700',
+                                                    fontSize: 'clamp(12px, 3.2vw, 14px)',
+                                                    cursor: 'pointer',
                                                     letterSpacing: '0.3px',
                                                     transition: 'all 0.2s ease',
                                                     boxShadow: `0 4px 12px ${p.shadowColor}`,
+                                                    whiteSpace: 'nowrap',
+                                                    flexShrink: 0,
                                                 }}
-                                                onMouseEnter={e => { 
-                                                    e.currentTarget.style.transform = 'translateY(-2px)'; 
+                                                onMouseEnter={e => {
+                                                    e.currentTarget.style.transform = 'translateY(-2px)';
                                                     e.currentTarget.style.boxShadow = `0 8px 24px ${p.shadowColor}`;
                                                 }}
-                                                onMouseLeave={e => { 
-                                                    e.currentTarget.style.transform = 'translateY(0)'; 
+                                                onMouseLeave={e => {
+                                                    e.currentTarget.style.transform = 'translateY(0)';
                                                     e.currentTarget.style.boxShadow = `0 4px 12px ${p.shadowColor}`;
                                                 }}
                                             >
@@ -354,48 +368,54 @@ export default function PlantCarousel() {
                 {/* CONTROLS */}
                 <div style={{
                     display: 'flex', justifyContent: 'center', alignItems: 'center',
-                    gap: '24px', marginTop: '60px',
+                    gap: '12px', marginTop: '40px', padding: '0 16px',
                 }}>
                     <button
                         onClick={prev}
+                        aria-label="Previous"
                         style={{
-                            width: '56px', height: '56px', borderRadius: '50%',
+                            width: '44px', height: '44px', borderRadius: '50%',
                             border: '2px solid rgba(255,255,255,0.15)',
                             background: 'rgba(255,255,255,0.08)',
-                            color: '#fff', cursor: 'pointer',
+                            color: '#fff', cursor: 'pointer', flexShrink: 0,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             transition: 'all 0.3s ease', backdropFilter: 'blur(12px)',
                         }}
                         onMouseEnter={e => {
                             e.currentTarget.style.background = plant.accentColor;
                             e.currentTarget.style.borderColor = plant.accentColor;
-                            e.currentTarget.style.transform = 'scale(1.1)';
                         }}
                         onMouseLeave={e => {
                             e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
                             e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
-                            e.currentTarget.style.transform = 'scale(1)';
                         }}
                     >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                             <path d="M19 12H5M12 5l-7 7 7 7" />
                         </svg>
                     </button>
 
-                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <div style={{
+                        display: 'flex', gap: '6px', alignItems: 'center',
+                        flexWrap: 'wrap', justifyContent: 'center',
+                        flex: 1, minWidth: 0, overflow: 'hidden',
+                        maxWidth: 'calc(100vw - 140px)',
+                    }}>
                         {plants.map((p, idx) => (
                             <button
                                 key={idx}
                                 onClick={() => goTo(idx)}
+                                aria-label={`Go to slide ${idx + 1}`}
                                 style={{
-                                    width: active === idx ? '40px' : '10px', 
-                                    height: '10px',
-                                    borderRadius: '50px', 
-                                    border: 'none', 
-                                    padding: 0, 
+                                    width: active === idx ? '28px' : '8px',
+                                    height: '8px',
+                                    borderRadius: '50px',
+                                    border: 'none',
+                                    padding: 0,
                                     cursor: 'pointer',
+                                    flexShrink: 0,
                                     background: active === idx ? plant.accentColor : 'rgba(255,255,255,0.25)',
-                                    boxShadow: active === idx ? `0 0 16px ${plant.shadowColor}` : 'none',
+                                    boxShadow: active === idx ? `0 0 12px ${plant.shadowColor}` : 'none',
                                     transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
                                 }}
                             />
@@ -404,26 +424,25 @@ export default function PlantCarousel() {
 
                     <button
                         onClick={next}
+                        aria-label="Next"
                         style={{
-                            width: '56px', height: '56px', borderRadius: '50%',
+                            width: '44px', height: '44px', borderRadius: '50%',
                             border: '2px solid rgba(255,255,255,0.15)',
                             background: 'rgba(255,255,255,0.08)',
-                            color: '#fff', cursor: 'pointer',
+                            color: '#fff', cursor: 'pointer', flexShrink: 0,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             transition: 'all 0.3s ease', backdropFilter: 'blur(12px)',
                         }}
                         onMouseEnter={e => {
                             e.currentTarget.style.background = plant.accentColor;
                             e.currentTarget.style.borderColor = plant.accentColor;
-                            e.currentTarget.style.transform = 'scale(1.1)';
                         }}
                         onMouseLeave={e => {
                             e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
                             e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
-                            e.currentTarget.style.transform = 'scale(1)';
                         }}
                     >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                             <path d="M5 12h14M12 5l7 7-7 7" />
                         </svg>
                     </button>
@@ -442,6 +461,9 @@ export default function PlantCarousel() {
             <style>{`
         .carousel-toast { position:fixed; bottom:32px; left:50%; transform:translateX(-50%) translateY(20px); background:linear-gradient(135deg,#0f3322,#081d14); border:1px solid rgba(74,222,128,0.35); color:#fff; padding:14px 28px; border-radius:50px; font-size:14px; opacity:0; transition:all 0.4s ease; pointer-events:none; z-index:999; white-space:nowrap; }
         .carousel-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+        @media (max-width: 500px) {
+            .carousel-side-card { display: none !important; }
+        }
       `}</style>
             <div className={`carousel-toast ${toast.show ? 'show' : ''}`}>{toast.msg}</div>
         </section>

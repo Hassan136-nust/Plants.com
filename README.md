@@ -16,7 +16,7 @@
 
 <br/>
 
-[![Preview](./p1.png)](https://zia-nursery.vercel.app)
+[![Preview](./p1.jpg)](https://zia-nursery.vercel.app)
 
 </div>
 
