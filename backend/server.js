@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const path = require('path');
 
 const authRoutes = require('./routes/auth');
 const orderRoutes = require('./routes/orders');
@@ -9,9 +10,9 @@ const cartRoutes = require('./routes/cart');
 const uploadRoutes = require('./routes/upload');
 const plantsRoutes = require('./routes/plants');
 const contactRoutes = require('./routes/contact');
-const path = require('path');
 
 const app = express();
+
 
 // ─── CORS ───────────────────────────────────────────────────────────────────
 const allowedOrigins = [
@@ -22,11 +23,12 @@ const allowedOrigins = [
 
 app.use(cors({
     origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
+
+        // Allow requests with no origin
         if (!origin) return callback(null, true);
 
         const isAllowed =
-            allowedOrigins.indexOf(origin) !== -1 ||
+            allowedOrigins.includes(origin) ||
             /\.vercel\.app$/i.test(origin) ||
             /localhost:\d+$/i.test(origin);
 
@@ -39,14 +41,62 @@ app.use(cors({
     credentials: true,
 }));
 
-// ─── STATIC & POST UPLOADS ───────────────────────────────────────────────────
+
+// ─── STATIC FILES ───────────────────────────────────────────────────────────
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// ─── BODY PARSER ─────────────────────────────────────────────────────────────
+
+// ─── BODY PARSER ────────────────────────────────────────────────────────────
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ─── ROUTES ──────────────────────────────────────────────────────────────────
+
+// ─── MONGODB CONNECTION ─────────────────────────────────────────────────────
+let isConnected = false;
+
+const connectDB = async () => {
+
+    if (isConnected) {
+        return;
+    }
+
+    try {
+
+        const conn = await mongoose.connect(process.env.MONGO_URI, {
+            serverSelectionTimeoutMS: 30000,
+        });
+
+        isConnected = conn.connections[0].readyState;
+
+        console.log('✅ MongoDB Connected');
+
+    } catch (error) {
+
+        console.error('❌ MongoDB Connection Error:', error.message);
+        throw error;
+    }
+};
+
+
+// Connect DB before every request (important for Vercel serverless)
+app.use(async (req, res, next) => {
+
+    try {
+
+        await connectDB();
+        next();
+
+    } catch (error) {
+
+        return res.status(500).json({
+            message: 'Database connection failed',
+            error: error.message
+        });
+    }
+});
+
+
+// ─── ROUTES ─────────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/cart', cartRoutes);
@@ -54,39 +104,34 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/plants', plantsRoutes);
 app.use('/api/contact', contactRoutes);
 
-// Health check
+
+// ─── HEALTH CHECK ───────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'OK', message: 'Zia Nursery API is running 🌿' });
+    res.json({
+        status: 'OK',
+        message: 'Zia Nursery API is running 🌿'
+    });
 });
 
-// 404 handler
+
+// ─── 404 HANDLER ────────────────────────────────────────────────────────────
 app.use((req, res) => {
-    res.status(404).json({ message: `Route ${req.originalUrl} not found.` });
+    res.status(404).json({
+        message: `Route ${req.originalUrl} not found.`
+    });
 });
 
-// ─── DB CONNECTION → START SERVER ─────────────────────────────────────────────
+
+// ─── START SERVER (LOCAL ONLY) ─────────────────────────────────────────────
 const PORT = process.env.PORT || 5001;
 
-// Connect to MongoDB (Safe Serverless check)
-if (process.env.MONGO_URI) {
-    mongoose
-        .connect(process.env.MONGO_URI)
-        .then(() => {
-            console.log('✅ Connected to MongoDB Atlas');
-        })
-        .catch((err) => {
-            console.error('❌ MongoDB connection failed:', err.message);
-        });
-} else {
-    console.warn('⚠️ MONGO_URI environment variable is missing.');
-}
-
-// Only start server if not in Vercel serverless environment
 if (process.env.VERCEL !== '1') {
+
     app.listen(PORT, () => {
         console.log(`🚀 Server running on http://localhost:${PORT}`);
     });
 }
 
-// Export for Vercel serverless
+
+// ─── EXPORT FOR VERCEL ──────────────────────────────────────────────────────
 module.exports = app;
