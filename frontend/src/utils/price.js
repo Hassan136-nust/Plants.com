@@ -1,25 +1,38 @@
+/**
+ * parsePrice — safely extract a numeric rupee value from any price format.
+ *
+ * Handles:
+ *   "Rs. 2,500"  → 2500
+ *   "Rs. 600"    → 600
+ *   "2500"       → 2500
+ *   2500         → 2500
+ *   600          → 600
+ *
+ * Does NOT scale small values. The old "p < 1 → p * 10000" logic was the
+ * root cause of the x10 bug and has been permanently removed.
+ */
 export function parsePrice(value) {
-    let p = 0;
     if (value === undefined || value === null) return 0;
+
+    let p = 0;
+
     if (typeof value === 'number') {
         p = value;
     } else if (typeof value === 'string') {
+        // Remove currency symbols, letters, spaces — keep only digits and dot
         const s = value.replace(/[^0-9.]/g, '');
         p = parseFloat(s) || 0;
     } else {
-        try {
-            p = parseFloat(String(value)) || 0;
-        } catch { p = 0 }
+        try { p = parseFloat(String(value)) || 0; } catch { p = 0; }
     }
 
-    // Handle incorrect small fractions (e.g., 0.25 instead of 2500).
-    // If value looks like a tiny fraction, assume it was scaled and bring it to rupees.
-    if (p > 0 && p < 1) {
-        p = p * 10000;
-    }
+    // Sanity cap: no plant costs more than Rs. 999,999
+    if (p > 999999) return 0;
+
     return p;
 }
 
 export function formatRupee(value) {
-    return `Rs. ${parseFloat(value).toFixed(2)}`;
+    const n = parsePrice(value);
+    return `Rs. ${Math.round(n).toLocaleString('en-PK')}`;
 }

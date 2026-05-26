@@ -36,13 +36,29 @@ export function CartProvider({ children }) {
         return { ...it, id: incomingId ? String(incomingId) : String(incomingId) };
     };
 
+    // Fix prices corrupted by the old "p < 1 → p * 10000" scaling bug.
+    // If a stored price is a multiple of 10000 but the server says otherwise, trust the server.
+    // This runs after server plant data is fetched, so serverPlant.price is always fresh.
+    const healPlantPrice = (storedPlant, serverPlant) => {
+        if (!serverPlant?.price) return storedPlant;
+        // Always prefer the server's price — it's the source of truth
+        return { ...storedPlant, ...serverPlant };
+    };
+
+    // dedupeCart: merges duplicates — takes the MAX quantity (not sum)
+    // This prevents exponential accumulation when guest+server carts share items
     const dedupeCart = (arr) => {
         const map = new Map();
         arr.forEach(raw => {
             const it = normalizeItem(raw);
             const id = it.id || 'unknown';
-            if (!map.has(id)) map.set(id, { ...it, quantity: Number(it.quantity) || 0 });
-            else map.set(id, { ...map.get(id), quantity: (map.get(id).quantity || 0) + (Number(it.quantity) || 0) });
+            if (!map.has(id)) {
+                map.set(id, { ...it, quantity: Number(it.quantity) || 1 });
+            } else {
+                // Take MAX quantity — prevents guest+server accumulation bug
+                const existing = map.get(id);
+                map.set(id, { ...existing, quantity: Math.max(existing.quantity, Number(it.quantity) || 1) });
+            }
         });
         return Array.from(map.values());
     };
@@ -57,26 +73,33 @@ export function CartProvider({ children }) {
                 if (user && token) {
                     const res = await fetch(`${API_URL}/api/cart`, { headers: { Authorization: `Bearer ${token}` } });
                     const data = await res.json();
-                    const serverCart = data.cart || [];
+                    const serverCart = (data.cart || []).map(it => ({ ...it, quantity: Math.min(Number(it.quantity) || 1, 20) }));
 
-                    // Merge guest cart into server cart (sum quantities)
+                    // Only pull guest items that are NOT already in the server cart
+                    // (never sum quantities — server cart is authoritative)
                     const guestStore = localStorage.getItem(GUEST_KEY);
                     const guestCart = guestStore ? JSON.parse(guestStore) : [];
+                    const serverIds = new Set(serverCart.map(it => String(it.id)));
+                    const newGuestItems = guestCart
+                        .filter(it => !serverIds.has(String(it.id || it.plant?._id || it.plant?.id)))
+                        .map(it => ({ ...it, quantity: Math.min(Number(it.quantity) || 1, 20) }));
 
-                    // Merge and dedupe deterministically
-                    const merged = dedupeCart(serverCart.concat(guestCart));
+                    const merged = dedupeCart([...serverCart, ...newGuestItems]);
 
                     // Normalize prices with latest product data
                     try {
                         const plantsRes = await fetch(`${API_URL}/api/plants`);
                         const plantsData = await plantsRes.json();
                         if (!Array.isArray(plantsData)) throw new Error('Invalid plants response');
-                        const map = new Map(plantsData.map(p => [p._id, p]));
+                        // Primary lookup: by _id. Secondary: by name (handles reseed where IDs change)
+                        const byId = new Map(plantsData.map(p => [p._id, p]));
+                        const byName = new Map(plantsData.map(p => [p.name.toLowerCase().trim(), p]));
                         const norm = merged.map(item => {
-                            const serverPlant = map.get(item.id) || item.plant || {};
-                            return { ...item, plant: { ...serverPlant } };
-                        });
-                        // ensure this is still the latest init run
+                            const staleName = (item.plant?.name || '').toLowerCase().trim();
+                            const serverPlant = byId.get(item.id) || byName.get(staleName) || item.plant || {};
+                            const freshId = serverPlant._id ? String(serverPlant._id) : item.id;
+                            return { ...item, id: freshId, plant: healPlantPrice(item.plant || {}, serverPlant) };
+                        });                        // ensure this is still the latest init run
                         if (initRunRef.current === runId) {
                             setCart(dedupeCart(norm));
                             localStorage.setItem(USER_KEY, JSON.stringify(dedupeCart(norm)));
@@ -104,11 +127,15 @@ export function CartProvider({ children }) {
                         const plantsRes = await fetch(`${API_URL}/api/plants`);
                         const plantsData = await plantsRes.json();
                         if (!Array.isArray(plantsData)) throw new Error('Invalid plants response');
-                        const map = new Map(plantsData.map(p => [p._id, p]));
+                        // Primary lookup: by _id. Secondary: by name (handles reseed where IDs change)
+                        const byId = new Map(plantsData.map(p => [p._id, p]));
+                        const byName = new Map(plantsData.map(p => [p.name.toLowerCase().trim(), p]));
                         const norm = guest.map(item => {
                             const ni = normalizeItem(item);
-                            const serverPlant = map.get(ni.id) || item.plant || {};
-                            return { ...ni, plant: { ...serverPlant } };
+                            const staleName = (ni.plant?.name || '').toLowerCase().trim();
+                            const serverPlant = byId.get(ni.id) || byName.get(staleName) || ni.plant || {};
+                            const freshId = serverPlant._id ? String(serverPlant._id) : ni.id;
+                            return { ...ni, id: freshId, plant: healPlantPrice(ni.plant || {}, serverPlant) };
                         });
                         const deduped = dedupeCart(norm);
                         if (initRunRef.current === runId) setCart(deduped);
