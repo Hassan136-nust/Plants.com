@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
+import { formatRupee } from '../utils/price';
 import { useAuth } from '../context/AuthContext';
 import API_URL from '../config';
 
@@ -143,7 +144,7 @@ export default function PlantsPage() {
                                         <h3 className="plant-card-title">{plant.name}</h3>
                                         <p className="plant-card-science">{plant.scientificName}</p>
                                         <div className="plant-card-bottom">
-                                            <span className="plant-card-price">{plant.price}</span>
+                                            <span className="plant-card-price">{formatRupee(plant.price)}</span>
                                             <button
                                                 className="plant-card-btn"
                                                 title="Add to Cart"

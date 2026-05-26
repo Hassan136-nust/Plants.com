@@ -64,10 +64,13 @@ router.post('/', protect, adminOnly, upload.single('image'), async (req, res) =>
             return res.status(400).json({ message: 'Image is required' });
         }
 
+        // Normalize price to a Number (accept human-friendly strings like "Rs. 2,500")
+        const priceNum = parseFloat(String(price).replace(/[^0-9.]/g, '')) || 0;
+
         const plant = new Plant({
             name,
             scientificName,
-            price,
+            price: priceNum,
             category,
             imageUrl,
             isCarousel: isCarousel === 'true' || isCarousel === true,
@@ -92,7 +95,7 @@ router.put('/:id', protect, adminOnly, upload.single('image'), async (req, res) 
         if (req.file) plant.imageUrl = req.file.path; // Cloudinary URL
         if (req.body.name) plant.name = req.body.name;
         if (req.body.scientificName) plant.scientificName = req.body.scientificName;
-        if (req.body.price) plant.price = req.body.price;
+        if (req.body.price) plant.price = parseFloat(String(req.body.price).replace(/[^0-9.]/g, '')) || plant.price;
         if (req.body.category) plant.category = req.body.category;
         if (req.body.isCarousel !== undefined)
             plant.isCarousel = req.body.isCarousel === 'true' || req.body.isCarousel === true;

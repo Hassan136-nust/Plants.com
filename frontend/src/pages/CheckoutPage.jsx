@@ -45,16 +45,8 @@ export default function CheckoutPage() {
             // 2. Place Order
             const orderRes = await fetch(`${API_URL}/api/orders`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    items: cart,
-                    ...form,
-                    receiptUrl: uploadData.url,
-                    advancePaid: true
-                })
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ items: cart, ...form, receiptUrl: uploadData.url, advancePaid: true })
             });
             const orderData = await orderRes.json();
             if (!orderRes.ok) throw new Error(orderData.message || 'Order failed');
@@ -179,7 +171,7 @@ export default function CheckoutPage() {
                                 </div>
                                 <span style={{ color: '#f8db7d' }}>{(() => {
                                     const price = parsePrice(item.plant?.price);
-                                    return `Rs. ${(price * item.quantity).toFixed(2)}`;
+                                    return `Rs. ${(price * item.quantity).toFixed(0)}`;
                                 })()}</span>
                             </div>
                         ))}

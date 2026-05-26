@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useCart } from '../context/CartContext';
+import { formatRupee } from '../utils/price';
 import API_URL from '../config';
 
 const CAROUSEL_STYLES = [
@@ -314,7 +315,7 @@ export default function PlantCarousel() {
                                                 fontFamily: 'var(--font-sans)',
                                                 letterSpacing: '-0.5px',
                                             }}>
-                                                {p.price}
+                                                {formatRupee(p.price)}
                                             </span>
                                             <button
                                                 onClick={() => handleAddToCart(p)}

@@ -12,7 +12,7 @@ const plantSchema = new mongoose.Schema({
         trim: true,
     },
     price: {
-        type: String,
+        type: Number,
         required: [true, 'Price is required'],
     },
     category: {
