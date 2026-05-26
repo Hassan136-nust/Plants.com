@@ -27,19 +27,33 @@ router.post('/', protect, async (req, res) => {
         // Calculate totalAmount server-side for security
         let totalAmount = 0;
         const formattedItems = items.map(item => {
-            // Handle multiple possible cart structures:
-            // { plant: { name, price }, quantity }  OR  { name, price, quantity }
-            const plantData = item.plant || item;
-            const rawPrice = plantData.price || item.price || '0';
+            // Robustly extract price from any cart item shape:
+            // { plant: { price: "Rs. 2500" }, quantity }
+            // { plant: { price: 2500 }, quantity }
+            // { price: "Rs. 2500", quantity }
+            const plantData = item.plant || {};
+            const rawPrice =
+                plantData.price ??
+                item.price ??
+                plantData.priceNum ??
+                item.priceNum ??
+                '0';
+
+            // Strip everything except digits and dot, then parse
             const priceNum = parseFloat(String(rawPrice).replace(/[^0-9.]/g, '')) || 0;
-            const qty = Number(item.quantity) || 1;
+            const qty = Math.max(1, parseInt(item.quantity) || 1);
             totalAmount += priceNum * qty;
+
             return {
                 plantName: plantData.name || item.plantName || 'Unknown',
-                price: String(rawPrice),
+                price: String(rawPrice),       // original string e.g. "Rs. 2500"
+                priceNum,                       // numeric e.g. 2500  ← used for display
                 quantity: qty,
             };
         });
+
+        // Round to avoid floating point noise
+        totalAmount = Math.round(totalAmount);
 
         const order = new Order({
             user: req.user.id,

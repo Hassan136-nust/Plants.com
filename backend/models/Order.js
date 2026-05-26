@@ -10,6 +10,7 @@ const orderSchema = new mongoose.Schema({
         {
             plantName: { type: String, required: true },
             price: { type: String, required: true },
+            priceNum: { type: Number, default: 0 },
             quantity: { type: Number, required: true, default: 1 }
         }
     ],
