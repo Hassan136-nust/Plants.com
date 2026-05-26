@@ -25,6 +25,7 @@ export default function AdminPage() {
     const [plantFile, setPlantFile] = useState(null);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [uploading, setUploading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const fileInputRef = React.useRef(null);
     const [updatingPlantId, setUpdatingPlantId] = useState(null);
@@ -72,6 +73,8 @@ export default function AdminPage() {
     const handleAddPlant = async (e) => {
         e.preventDefault();
         setError(''); setSuccess('');
+        if (!plantFile) return setError('Image file is required');
+        setUploading(true);
         try {
             const formData = new FormData();
             formData.append('name', newPlant.name);
@@ -79,7 +82,6 @@ export default function AdminPage() {
             formData.append('price', newPlant.price);
             formData.append('category', newPlant.category);
             formData.append('isCarousel', newPlant.isCarousel);
-            if (!plantFile) return alert('Image file is required');
             formData.append('image', plantFile);
 
             const res = await fetch(`${API_URL}/api/plants`, {
@@ -87,6 +89,7 @@ export default function AdminPage() {
                 headers: { Authorization: `Bearer ${token}` },
                 body: formData
             });
+            const data = await res.json();
             if (res.ok) {
                 setNewPlant({ name: '', scientificName: '', price: '', category: '', isCarousel: false });
                 setPlantFile(null);
@@ -94,10 +97,13 @@ export default function AdminPage() {
                 setTimeout(() => setSuccess(''), 3000);
                 fetchPlants();
             } else {
-                const data = await res.json();
                 setError(data.message || 'Error adding plant');
             }
-        } catch (err) { setError(err.message); }
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setUploading(false);
+        }
     };
 
     const handleUpdatePic = async (e) => {
@@ -166,6 +172,7 @@ export default function AdminPage() {
 
     return (
         <section className="container" style={{ padding: '120px 20px', minHeight: '80vh' }}>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
             <h2 className="section-title">Admin Dashboard</h2>
 
             {(error || success) && (
@@ -264,8 +271,13 @@ export default function AdminPage() {
 
                             <input type="file" accept="image/*" onChange={e => setPlantFile(e.target.files[0])} style={{ color: '#fff' }} required />
 
-                            <button type="submit" style={{ background: '#4ade80', color: '#000', border: 'none', padding: '12px', borderRadius: '50px', fontWeight: 'bold', cursor: 'pointer', marginTop: '16px' }}>
-                                Upload to Database
+                            <button type="submit" disabled={uploading} style={{ background: uploading ? '#2d7a4f' : '#4ade80', color: '#000', border: 'none', padding: '12px', borderRadius: '50px', fontWeight: 'bold', cursor: uploading ? 'not-allowed' : 'pointer', marginTop: '16px', opacity: uploading ? 0.8 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                {uploading ? (
+                                    <>
+                                        <span style={{ display: 'inline-block', width: '16px', height: '16px', border: '2px solid #000', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                                        Uploading...
+                                    </>
+                                ) : 'Upload to Database'}
                             </button>
                         </form>
                     </div>

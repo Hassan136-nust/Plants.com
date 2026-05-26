@@ -1,35 +1,39 @@
 const express = require('express');
 const multer = require('multer');
-const path = require('path');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
 const Plant = require('../models/Plant');
 const protect = require('../middleware/auth');
 
 const router = express.Router();
 
-// Middleware to Check Admin Role
-const adminOnly = (req, res, next) => {
-    if (req.user && req.user.role === 'admin') {
-        next();
-    } else {
-        res.status(401).json({ message: 'Not authorized as an admin' });
-    }
-};
+// ─── Cloudinary Config ────────────────────────────────────────────────────────
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-// Multer Storage for Plants
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'uploads/plants/');
+// ─── Multer → Cloudinary Storage ─────────────────────────────────────────────
+const storage = new CloudinaryStorage({
+    cloudinary,
+    params: {
+        folder: 'zia-nursery/plants',
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+        transformation: [{ width: 800, height: 800, crop: 'limit', quality: 'auto' }],
     },
-    filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
-    }
 });
 
 const upload = multer({
-    storage: storage,
+    storage,
     limits: { fileSize: 5 * 1024 * 1024 },
 });
+
+// ─── Admin check ──────────────────────────────────────────────────────────────
+const adminOnly = (req, res, next) => {
+    if (req.user && req.user.role === 'admin') return next();
+    res.status(401).json({ message: 'Not authorized as an admin' });
+};
 
 // @route   GET /api/plants
 // @desc    Get all plants
@@ -44,15 +48,16 @@ router.get('/', async (req, res) => {
 });
 
 // @route   POST /api/plants
-// @desc    Create a new Plant
+// @desc    Create a new plant
 // @access  Private/Admin
 router.post('/', protect, adminOnly, upload.single('image'), async (req, res) => {
     try {
         const { name, scientificName, price, category, isCarousel } = req.body;
 
-        let imageUrl = req.body.imageUrl; // if they provide a URL directly
+        // Cloudinary upload gives us req.file.path (the secure URL)
+        let imageUrl = req.body.imageUrl;
         if (req.file) {
-            imageUrl = `/uploads/plants/${req.file.filename}`;
+            imageUrl = req.file.path; // Cloudinary secure URL
         }
 
         if (!imageUrl) {
@@ -65,12 +70,37 @@ router.post('/', protect, adminOnly, upload.single('image'), async (req, res) =>
             price,
             category,
             imageUrl,
-            isCarousel: isCarousel === 'true' || isCarousel === true
+            isCarousel: isCarousel === 'true' || isCarousel === true,
         });
 
-        const createdPlant = await plant.save();
-        res.status(201).json(createdPlant);
+        const created = await plant.save();
+        res.status(201).json(created);
     } catch (err) {
+        console.error('POST /api/plants error:', err);
+        res.status(500).json({ message: 'Server Error', error: err.message });
+    }
+});
+
+// @route   PUT /api/plants/:id
+// @desc    Update a plant
+// @access  Private/Admin
+router.put('/:id', protect, adminOnly, upload.single('image'), async (req, res) => {
+    try {
+        const plant = await Plant.findById(req.params.id);
+        if (!plant) return res.status(404).json({ message: 'Plant not found' });
+
+        if (req.file) plant.imageUrl = req.file.path; // Cloudinary URL
+        if (req.body.name) plant.name = req.body.name;
+        if (req.body.scientificName) plant.scientificName = req.body.scientificName;
+        if (req.body.price) plant.price = req.body.price;
+        if (req.body.category) plant.category = req.body.category;
+        if (req.body.isCarousel !== undefined)
+            plant.isCarousel = req.body.isCarousel === 'true' || req.body.isCarousel === true;
+
+        const updated = await plant.save();
+        res.json(updated);
+    } catch (err) {
+        console.error('PUT /api/plants/:id error:', err);
         res.status(500).json({ message: 'Server Error', error: err.message });
     }
 });
@@ -81,39 +111,9 @@ router.post('/', protect, adminOnly, upload.single('image'), async (req, res) =>
 router.delete('/:id', protect, adminOnly, async (req, res) => {
     try {
         const plant = await Plant.findById(req.params.id);
-        if (plant) {
-            await plant.deleteOne();
-            res.json({ message: 'Plant removed' });
-        } else {
-            res.status(404).json({ message: 'Plant not found' });
-        }
-    } catch (err) {
-        res.status(500).json({ message: 'Server Error', error: err.message });
-    }
-});
-
-// @route   PUT /api/plants/:id
-// @desc    Update a plant (especially image)
-// @access  Private/Admin
-router.put('/:id', protect, adminOnly, upload.single('image'), async (req, res) => {
-    try {
-        const plant = await Plant.findById(req.params.id);
-        if (!plant) {
-            return res.status(404).json({ message: 'Plant not found' });
-        }
-
-        if (req.file) {
-            plant.imageUrl = `/uploads/plants/${req.file.filename}`;
-        }
-
-        if (req.body.name) plant.name = req.body.name;
-        if (req.body.scientificName) plant.scientificName = req.body.scientificName;
-        if (req.body.price) plant.price = req.body.price;
-        if (req.body.category) plant.category = req.body.category;
-        if (req.body.isCarousel !== undefined) plant.isCarousel = req.body.isCarousel === 'true' || req.body.isCarousel === true;
-
-        const updatedPlant = await plant.save();
-        res.json(updatedPlant);
+        if (!plant) return res.status(404).json({ message: 'Plant not found' });
+        await plant.deleteOne();
+        res.json({ message: 'Plant removed' });
     } catch (err) {
         res.status(500).json({ message: 'Server Error', error: err.message });
     }
