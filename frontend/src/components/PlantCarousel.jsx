@@ -27,6 +27,10 @@ export default function PlantCarousel() {
         fetch(`${API_URL}/api/plants`)
             .then(r => r.json())
             .then(data => {
+                if (!Array.isArray(data)) {
+                    console.error('Error fetching carousel plants: unexpected response', data);
+                    return;
+                }
                 const carouselPlants = data.filter(p => p.isCarousel).map((p, i) => {
                     const style = CAROUSEL_STYLES[i % CAROUSEL_STYLES.length];
                     let url = p.imageUrl || '';

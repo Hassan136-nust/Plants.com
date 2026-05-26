@@ -70,6 +70,7 @@ export function CartProvider({ children }) {
                     try {
                         const plantsRes = await fetch(`${API_URL}/api/plants`);
                         const plantsData = await plantsRes.json();
+                        if (!Array.isArray(plantsData)) throw new Error('Invalid plants response');
                         const map = new Map(plantsData.map(p => [p._id, p]));
                         const norm = merged.map(item => {
                             const serverPlant = map.get(item.id) || item.plant || {};
@@ -102,6 +103,7 @@ export function CartProvider({ children }) {
                     try {
                         const plantsRes = await fetch(`${API_URL}/api/plants`);
                         const plantsData = await plantsRes.json();
+                        if (!Array.isArray(plantsData)) throw new Error('Invalid plants response');
                         const map = new Map(plantsData.map(p => [p._id, p]));
                         const norm = guest.map(item => {
                             const ni = normalizeItem(item);

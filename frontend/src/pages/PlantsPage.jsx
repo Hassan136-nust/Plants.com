@@ -16,6 +16,11 @@ export default function PlantsPage() {
         fetch(`${API_URL}/api/plants`)
             .then(r => r.json())
             .then(data => {
+                if (!Array.isArray(data)) {
+                    console.error('Unexpected response from /api/plants:', data);
+                    setLoading(false);
+                    return;
+                }
                 const normalized = data.map(p => {
                     let url = p.imageUrl || '';
                     try {
