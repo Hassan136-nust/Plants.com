@@ -1,5 +1,6 @@
 const express = require('express');
 const Order = require('../models/Order');
+const Plant = require('../models/Plant');
 const protect = require('../middleware/auth');
 
 const router = express.Router();
@@ -24,35 +25,37 @@ router.post('/', protect, async (req, res) => {
             return res.status(400).json({ message: 'No items in order' });
         }
 
-        // Calculate totalAmount server-side for security
-        let totalAmount = 0;
-        const formattedItems = items.map(item => {
-            // Robustly extract price from any cart item shape:
-            // { plant: { price: "Rs. 2500" }, quantity }
-            // { plant: { price: 2500 }, quantity }
-            // { price: "Rs. 2500", quantity }
-            const plantData = item.plant || {};
-            const rawPrice =
-                plantData.price ??
-                item.price ??
-                plantData.priceNum ??
-                item.priceNum ??
-                '0';
+        // ── Fetch all referenced plant IDs from MongoDB in one query ──────────
+        const plantIds = items
+            .map(it => it.id || it.plant?._id || it.plant?.id)
+            .filter(Boolean);
 
-            // Strip everything except digits and dot, then parse
+        const dbPlants = await Plant.find({ _id: { $in: plantIds } }).select('name price').lean();
+        const plantMap = new Map(dbPlants.map(p => [String(p._id), p]));
+
+        // ── Build order items using live DB prices (fallback to client price) ──
+        let totalAmount = 0;
+
+        const formattedItems = items.map(item => {
+            const plantData = item.plant || {};
+            const itemId = String(item.id || plantData._id || plantData.id || '');
+            const dbPlant = plantMap.get(itemId);
+
+            // Prefer live DB price to prevent manipulation / zero price bugs
+            const rawPrice = dbPlant?.price ?? plantData.price ?? item.price ?? '0';
+
             const priceNum = parseFloat(String(rawPrice).replace(/[^0-9.]/g, '')) || 0;
             const qty = Math.max(1, parseInt(item.quantity) || 1);
             totalAmount += priceNum * qty;
 
             return {
-                plantName: plantData.name || item.plantName || 'Unknown',
-                price: String(rawPrice),       // original string e.g. "Rs. 2500"
-                priceNum,                       // numeric e.g. 2500  ← used for display
+                plantName: dbPlant?.name || plantData.name || item.plantName || 'Unknown',
+                price: String(rawPrice),   // e.g. "Rs. 2500"
+                priceNum,                  // e.g. 2500
                 quantity: qty,
             };
         });
 
-        // Round to avoid floating point noise
         totalAmount = Math.round(totalAmount);
 
         const order = new Order({

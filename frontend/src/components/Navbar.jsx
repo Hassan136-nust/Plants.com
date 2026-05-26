@@ -51,12 +51,19 @@ export default function Navbar() {
                             <span style={{ color: '#fff', fontSize: '13px', fontFamily: 'var(--font-sans)', opacity: 0.8 }}>
                                 Hi, {user.name.split(' ')[0]}
                             </span>
-                            {user.role === 'admin' && (
+                            {user.role === 'admin' ? (
                                 <Link
                                     to="/admin"
                                     style={{ background: '#f8db7d', color: '#000', border: 'none', padding: '6px 14px', borderRadius: '50px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', textDecoration: 'none' }}
                                 >
                                     Admin Panel
+                                </Link>
+                            ) : (
+                                <Link
+                                    to="/my-orders"
+                                    style={{ background: 'transparent', border: '1px solid rgba(74,222,128,0.4)', color: '#4ade80', padding: '6px 14px', borderRadius: '50px', cursor: 'pointer', fontSize: '12px', fontWeight: '600', textDecoration: 'none' }}
+                                >
+                                    📋 My Orders
                                 </Link>
                             )}
                             <button
