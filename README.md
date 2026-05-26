@@ -10,6 +10,14 @@
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://mongodb.com)
 [![Cloudinary](https://img.shields.io/badge/Cloudinary-Images-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)](https://cloudinary.com)
 
+<br/>
+
+**🌐 [View Live Demo → zia-nursery.vercel.app](https://zia-nursery.vercel.app)**
+
+<br/>
+
+[![Preview](./plants.png)](https://zia-nursery.vercel.app)
+
 </div>
 
 ---
