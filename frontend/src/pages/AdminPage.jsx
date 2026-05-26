@@ -222,7 +222,7 @@ export default function AdminPage() {
                                         </td>
                                         <td style={{ padding: '20px 12px', color: '#f8db7d' }}>Rs. {order.totalAmount}</td>
                                         <td style={{ padding: '20px 12px' }}>
-                                            <a href={`${HOST}${order.receiptUrl}`} target="_blank" rel="noreferrer" style={{ color: '#4ade80', textDecoration: 'none' }}>
+                                            <a href={order.receiptUrl?.startsWith('http') ? order.receiptUrl : `${HOST}${order.receiptUrl}`} target="_blank" rel="noreferrer" style={{ color: '#4ade80', textDecoration: 'none' }}>
                                                 View Pic
                                             </a>
                                         </td>
