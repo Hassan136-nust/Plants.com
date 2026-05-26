@@ -27,12 +27,17 @@ router.post('/', protect, async (req, res) => {
         // Calculate totalAmount server-side for security
         let totalAmount = 0;
         const formattedItems = items.map(item => {
-            const priceNum = parseFloat(item.plant.price.replace(/[^0-9.]/g, ''));
-            totalAmount += (priceNum * item.quantity);
+            // Handle multiple possible cart structures:
+            // { plant: { name, price }, quantity }  OR  { name, price, quantity }
+            const plantData = item.plant || item;
+            const rawPrice = plantData.price || item.price || '0';
+            const priceNum = parseFloat(String(rawPrice).replace(/[^0-9.]/g, '')) || 0;
+            const qty = Number(item.quantity) || 1;
+            totalAmount += priceNum * qty;
             return {
-                plantName: item.plant.name,
-                price: item.plant.price,
-                quantity: item.quantity
+                plantName: plantData.name || item.plantName || 'Unknown',
+                price: String(rawPrice),
+                quantity: qty,
             };
         });
 

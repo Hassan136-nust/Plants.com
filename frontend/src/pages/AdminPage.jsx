@@ -20,6 +20,7 @@ export default function AdminPage() {
 
     const [orders, setOrders] = useState([]);
     const [plants, setPlants] = useState([]);
+    const [expandedOrder, setExpandedOrder] = useState(null);
 
     const [newPlant, setNewPlant] = useState({ name: '', scientificName: '', price: '', category: '', isCarousel: false });
     const [plantFile, setPlantFile] = useState(null);
@@ -207,35 +208,129 @@ export default function AdminPage() {
                                     <th style={{ padding: '12px' }}>Amount</th>
                                     <th style={{ padding: '12px' }}>Receipt</th>
                                     <th style={{ padding: '12px' }}>Status</th>
+                                    <th style={{ padding: '12px' }}>Details</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {orders.map(order => (
-                                    <tr key={order._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <td style={{ padding: '20px 12px' }}>
-                                            <strong>{order.user?.name || 'Unknown'}</strong><br />
-                                            <span style={{ fontSize: '12px', opacity: 0.6 }}>{order.user?.email || ''}</span>
-                                        </td>
-                                        <td style={{ padding: '20px 12px', fontSize: '14px', opacity: 0.8 }}>
-                                            {order.address}, {order.city} {order.zipCode}<br />
-                                            Phone: {order.phone}
-                                        </td>
-                                        <td style={{ padding: '20px 12px', color: '#f8db7d' }}>Rs. {order.totalAmount}</td>
-                                        <td style={{ padding: '20px 12px' }}>
-                                            <a href={order.receiptUrl?.startsWith('http') ? order.receiptUrl : `${HOST}${order.receiptUrl}`} target="_blank" rel="noreferrer" style={{ color: '#4ade80', textDecoration: 'none' }}>
-                                                View Pic
-                                            </a>
-                                        </td>
-                                        <td style={{ padding: '20px 12px' }}>
-                                            {order.status === 'pending' ? (
-                                                <button onClick={() => handleConfirmOrder(order._id)} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer' }}>
-                                                    Confirm Order
+                                    <React.Fragment key={order._id}>
+                                        <tr style={{ borderBottom: expandedOrder === order._id ? 'none' : '1px solid rgba(255,255,255,0.05)' }}>
+                                            <td style={{ padding: '20px 12px' }}>
+                                                <strong>{order.user?.name || 'Unknown'}</strong><br />
+                                                <span style={{ fontSize: '12px', opacity: 0.6 }}>{order.user?.email || ''}</span>
+                                            </td>
+                                            <td style={{ padding: '20px 12px', fontSize: '14px', opacity: 0.8 }}>
+                                                {order.address}, {order.city} {order.zipCode}<br />
+                                                Phone: {order.phone}
+                                            </td>
+                                            <td style={{ padding: '20px 12px', color: '#f8db7d', fontWeight: 'bold' }}>
+                                                Rs. {Number(order.totalAmount).toLocaleString('en-PK', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                            </td>
+                                            <td style={{ padding: '20px 12px' }}>
+                                                <a href={order.receiptUrl?.startsWith('http') ? order.receiptUrl : `${HOST}${order.receiptUrl}`} target="_blank" rel="noreferrer" style={{ color: '#4ade80', textDecoration: 'none', border: '1px solid #4ade80', padding: '4px 10px', borderRadius: '6px', fontSize: '13px' }}>
+                                                    View Pic
+                                                </a>
+                                            </td>
+                                            <td style={{ padding: '20px 12px' }}>
+                                                {order.status === 'pending' ? (
+                                                    <button onClick={() => handleConfirmOrder(order._id)} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px' }}>
+                                                        Confirm Order
+                                                    </button>
+                                                ) : (
+                                                    <span style={{ color: '#4ade80', fontWeight: 'bold' }}>✓ Confirmed</span>
+                                                )}
+                                            </td>
+                                            <td style={{ padding: '20px 12px' }}>
+                                                <button
+                                                    onClick={() => setExpandedOrder(expandedOrder === order._id ? null : order._id)}
+                                                    style={{ background: 'transparent', color: '#a78bfa', border: '1px solid #a78bfa', padding: '5px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', whiteSpace: 'nowrap' }}
+                                                >
+                                                    {expandedOrder === order._id ? '▲ Hide' : '▼ Show Order'}
                                                 </button>
-                                            ) : (
-                                                <span style={{ color: '#4ade80', fontWeight: 'bold' }}>Confirmed</span>
-                                            )}
-                                        </td>
-                                    </tr>
+                                            </td>
+                                        </tr>
+
+                                        {/* Expanded order detail row */}
+                                        {expandedOrder === order._id && (
+                                            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                                <td colSpan={6} style={{ padding: '0 12px 20px' }}>
+                                                    <div style={{ background: 'rgba(167,139,250,0.07)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: '14px', padding: '20px 24px', display: 'flex', gap: '40px', flexWrap: 'wrap' }}>
+
+                                                        {/* Items */}
+                                                        <div style={{ flex: '1 1 280px' }}>
+                                                            <div style={{ color: '#a78bfa', fontWeight: '700', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>
+                                                                🌿 Items Ordered
+                                                            </div>
+                                                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                                                <thead>
+                                                                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                                                                        <th style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', fontWeight: '600', padding: '4px 8px 8px 0', textAlign: 'left' }}>Plant</th>
+                                                                        <th style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', fontWeight: '600', padding: '4px 8px 8px', textAlign: 'center' }}>Qty</th>
+                                                                        <th style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', fontWeight: '600', padding: '4px 0 8px 8px', textAlign: 'right' }}>Price</th>
+                                                                        <th style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', fontWeight: '600', padding: '4px 0 8px 8px', textAlign: 'right' }}>Subtotal</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    {order.items.map((item, i) => {
+                                                                        const priceNum = parseFloat(String(item.price).replace(/[^0-9.]/g, '')) || 0;
+                                                                        return (
+                                                                            <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                                                                                <td style={{ padding: '8px 8px 8px 0', color: '#fff', fontSize: '14px' }}>{item.plantName}</td>
+                                                                                <td style={{ padding: '8px', color: '#fff', fontSize: '14px', textAlign: 'center' }}>
+                                                                                    <span style={{ background: 'rgba(255,255,255,0.1)', borderRadius: '6px', padding: '2px 10px' }}>{item.quantity}</span>
+                                                                                </td>
+                                                                                <td style={{ padding: '8px 0 8px 8px', color: '#f8db7d', fontSize: '14px', textAlign: 'right' }}>{item.price}</td>
+                                                                                <td style={{ padding: '8px 0 8px 8px', color: '#f8db7d', fontSize: '14px', textAlign: 'right', fontWeight: '600' }}>
+                                                                                    Rs. {(priceNum * item.quantity).toLocaleString('en-PK', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                                                                </td>
+                                                                            </tr>
+                                                                        );
+                                                                    })}
+                                                                </tbody>
+                                                                <tfoot>
+                                                                    <tr style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}>
+                                                                        <td colSpan={3} style={{ padding: '10px 8px 4px 0', color: 'rgba(255,255,255,0.6)', fontSize: '13px', textAlign: 'right' }}>Total</td>
+                                                                        <td style={{ padding: '10px 0 4px 8px', color: '#4ade80', fontSize: '16px', fontWeight: '700', textAlign: 'right' }}>
+                                                                            Rs. {Number(order.totalAmount).toLocaleString('en-PK', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td colSpan={3} style={{ padding: '2px 8px 4px 0', color: 'rgba(255,255,255,0.4)', fontSize: '12px', textAlign: 'right' }}>70% Advance Paid</td>
+                                                                        <td style={{ padding: '2px 0 4px 8px', color: '#f8db7d', fontSize: '13px', fontWeight: '600', textAlign: 'right' }}>
+                                                                            Rs. {Math.round(order.totalAmount * 0.7).toLocaleString('en-PK')}
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td colSpan={3} style={{ padding: '2px 8px 4px 0', color: 'rgba(255,255,255,0.4)', fontSize: '12px', textAlign: 'right' }}>30% On Delivery</td>
+                                                                        <td style={{ padding: '2px 0 4px 8px', color: '#f8db7d', fontSize: '13px', fontWeight: '600', textAlign: 'right' }}>
+                                                                            Rs. {Math.round(order.totalAmount * 0.3).toLocaleString('en-PK')}
+                                                                        </td>
+                                                                    </tr>
+                                                                </tfoot>
+                                                            </table>
+                                                        </div>
+
+                                                        {/* Delivery Info */}
+                                                        <div style={{ flex: '0 1 240px' }}>
+                                                            <div style={{ color: '#a78bfa', fontWeight: '700', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>
+                                                                📦 Delivery Info
+                                                            </div>
+                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px' }}>
+                                                                <div><span style={{ color: 'rgba(255,255,255,0.5)', marginRight: '8px' }}>Name:</span><span style={{ color: '#fff' }}>{order.user?.name || '—'}</span></div>
+                                                                <div><span style={{ color: 'rgba(255,255,255,0.5)', marginRight: '8px' }}>Email:</span><span style={{ color: '#fff' }}>{order.user?.email || '—'}</span></div>
+                                                                <div><span style={{ color: 'rgba(255,255,255,0.5)', marginRight: '8px' }}>Phone:</span><span style={{ color: '#fff' }}>{order.phone}</span></div>
+                                                                <div><span style={{ color: 'rgba(255,255,255,0.5)', marginRight: '8px' }}>Address:</span><span style={{ color: '#fff' }}>{order.address}</span></div>
+                                                                <div><span style={{ color: 'rgba(255,255,255,0.5)', marginRight: '8px' }}>City:</span><span style={{ color: '#fff' }}>{order.city}</span></div>
+                                                                <div><span style={{ color: 'rgba(255,255,255,0.5)', marginRight: '8px' }}>Zip:</span><span style={{ color: '#fff' }}>{order.zipCode}</span></div>
+                                                                <div><span style={{ color: 'rgba(255,255,255,0.5)', marginRight: '8px' }}>Ordered:</span><span style={{ color: '#fff' }}>{new Date(order.createdAt).toLocaleString('en-PK', { dateStyle: 'medium', timeStyle: 'short' })}</span></div>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </React.Fragment>
                                 ))}
                             </tbody>
                         </table>
