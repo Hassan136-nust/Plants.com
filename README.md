@@ -72,7 +72,7 @@ npm run install-all
 MONGO_URI=mongodb+srv://<user>:<pass>@cluster.mongodb.net/plants
 JWT_SECRET=your_secure_secret_here
 PORT=5001
-CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_CLOUD_NAME=your_cloud
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 FRONTEND_URL=http://localhost:5173
