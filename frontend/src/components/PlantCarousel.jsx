@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useCart } from '../context/CartContext';
 import { formatRupee } from '../utils/price';
 import API_URL from '../config';
+import Reveal from './motion/Reveal';
+import { CarouselSkeleton } from './motion/Skeleton';
 
 const CAROUSEL_STYLES = [
     { bgColor: '#ffffff', accentColor: '#16a34a', shadowColor: 'rgba(22, 163, 74, 0.15)' },
@@ -16,6 +18,7 @@ const API = API_URL;
 
 export default function PlantCarousel() {
     const [plants, setPlants] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [active, setActive] = useState(0);
     const [sliding, setSliding] = useState(false);
     const intervalRef = useRef(null);
@@ -53,8 +56,9 @@ export default function PlantCarousel() {
                     };
                 });
                 setPlants(carouselPlants);
+                setLoading(false);
             })
-            .catch(err => console.error('Error fetching carousel plants:', err));
+            .catch(err => { console.error('Error fetching carousel plants:', err); setLoading(false); });
     }, []);
 
     const showToast = (msg) => {
@@ -136,6 +140,30 @@ export default function PlantCarousel() {
     const prev = () => goTo((active - 1 + plants.length) % plants.length);
     const next = () => goTo((active + 1) % plants.length);
 
+    // Skeleton while the featured collection loads
+    if (loading) {
+        return (
+            <section style={{
+                padding: 'clamp(80px, 12vw, 120px) 0 clamp(40px, 8vw, 80px)',
+                background: 'linear-gradient(180deg, #0b2218 0%, #081d14 100%)',
+                overflow: 'hidden',
+            }}>
+                <div className="container">
+                    <div style={{ textAlign: 'center', marginBottom: 'clamp(32px, 6vw, 70px)' }}>
+                        <div className="section-eyebrow">Plant Showcase</div>
+                        <h2 className="section-title" style={{ marginBottom: '14px' }}>Our <em>Featured</em> Collection</h2>
+                        <p className="section-desc" style={{ maxWidth: '520px', margin: '0 auto' }}>
+                            Hand-picked rarities directly from the Nursery. Swipe to explore the best additions.
+                        </p>
+                    </div>
+                    <div className="carousel-skeleton" style={{ minHeight: 'clamp(480px, 72vw, 680px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <CarouselSkeleton />
+                    </div>
+                </div>
+            </section>
+        );
+    }
+
     if (plants.length === 0) return null;
 
     const plant = plants[active];
@@ -156,7 +184,7 @@ export default function PlantCarousel() {
         }}>
             <div className="container">
                 {/* Header */}
-                <div style={{ textAlign: 'center', marginBottom: 'clamp(32px, 6vw, 70px)' }}>
+                <Reveal style={{ textAlign: 'center', marginBottom: 'clamp(32px, 6vw, 70px)' }}>
                     <div className="section-eyebrow">Plant Showcase</div>
                     <h2 className="section-title" style={{ marginBottom: '14px' }}>
                         Our <em>Featured</em> Collection
@@ -164,7 +192,7 @@ export default function PlantCarousel() {
                     <p className="section-desc" style={{ maxWidth: '520px', margin: '0 auto' }}>
                         Hand-picked rarities directly from the Nursery. Swipe to explore the best additions.
                     </p>
-                </div>
+                </Reveal>
 
                 {/* CAROUSEL STAGE */}
                 <div ref={stageRef} onMouseEnter={pause} onMouseLeave={resume}

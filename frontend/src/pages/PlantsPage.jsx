@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useCart } from '../context/CartContext';
 import { formatRupee } from '../utils/price';
 import { useAuth } from '../context/AuthContext';
 import API_URL from '../config';
+import Reveal, { staggerContainer, staggerItem } from '../components/motion/Reveal';
+import TiltCard from '../components/motion/TiltCard';
+import { PlantCardSkeleton } from '../components/motion/Skeleton';
+import Toast from '../components/motion/Toast';
+
+const API = API_URL;
 
 export default function PlantsPage() {
     const [activeTab, setActiveTab] = useState('All');
@@ -66,16 +73,18 @@ export default function PlantsPage() {
         <>
             <section style={{ paddingTop: '160px', paddingBottom: '60px', textAlign: 'center' }}>
                 <div className="container">
-                    <div className="section-eyebrow">Our Collection</div>
-                    <h1 className="section-title" style={{ marginBottom: '16px' }}>Browse Our <em>Plants</em></h1>
-                    <p className="section-desc" style={{ maxWidth: '580px', margin: '0 auto' }}>
-                        Hand-picked rarities and beloved classics — from tropical giants to delicate succulents.
-                    </p>
-                    {user && (
-                        <p style={{ marginTop: '14px', fontFamily: 'var(--font-sans)', fontSize: '13px', color: '#4ade80' }}>
-                            Welcome back, <strong>{user.name}</strong> 🌿
+                    <Reveal>
+                        <div className="section-eyebrow">Our Collection</div>
+                        <h1 className="section-title" style={{ marginBottom: '16px' }}>Browse Our <em>Plants</em></h1>
+                        <p className="section-desc" style={{ maxWidth: '580px', margin: '0 auto' }}>
+                            Hand-picked rarities and beloved classics — from tropical giants to delicate succulents.
                         </p>
-                    )}
+                        {user && (
+                            <p style={{ marginTop: '14px', fontFamily: 'var(--font-sans)', fontSize: '13px', color: '#4ade80' }}>
+                                Welcome back, <strong>{user.name}</strong> 🌿
+                            </p>
+                        )}
+                    </Reveal>
                 </div>
             </section>
 
@@ -100,73 +109,96 @@ export default function PlantsPage() {
                                 key={cat}
                                 className={`filter-btn ${activeTab === cat ? 'active' : ''}`}
                                 onClick={() => setActiveTab(cat)}
+                                style={{ position: 'relative' }}
                             >
-                                {cat}
+                                {activeTab === cat && (
+                                    <motion.span
+                                        layoutId="filter-pill"
+                                        style={{
+                                            position: 'absolute', inset: 0, borderRadius: 50,
+                                            background: 'var(--gold)', zIndex: 0,
+                                        }}
+                                        transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+                                    />
+                                )}
+                                <span style={{ position: 'relative', zIndex: 1 }}>{cat}</span>
                             </button>
                         ))}
                     </div>
 
                     {loading ? (
-                        <div style={{ textAlign: 'center', color: '#fff', padding: '80px' }}>Loading plants...</div>
-                    ) : (
                         <div className="plant-grid">
-                            {filtered.map((plant) => (
-                                <div key={plant._id} className="plant-card">
-                                    <div className="plant-card-visual" style={{ padding: 0, overflow: 'hidden' }}>
-                                        <img
-                                            src={plant.imageUrl && plant.imageUrl.startsWith('/') ? `${API}${plant.imageUrl}` : (plant.imageUrl || '')}
-                                            alt={plant.name}
-                                            loading="lazy"
-                                            style={{ width: '100%', height: '100%', objectFit: 'cover', backgroundColor: '#0b2b1a' }}
-                                            onError={(e) => {
-                                                e.target.onerror = null;
-                                                console.warn('Image load failed, attempting fallback for', e.target.src);
-                                                try {
-                                                    const parts = (plant.imageUrl || e.target.src || '').split('/');
-                                                    const file = parts[parts.length - 1];
-                                                    if (file) {
-                                                        const fallback = `${API}/uploads/plants/${file}`;
-                                                        if (e.target.src !== fallback) {
-                                                            e.target.src = fallback;
-                                                            return;
-                                                        }
-                                                    }
-                                                } catch (err) { /* ignore */ }
-
-                                                // final inline SVG placeholder so the card isn't empty
-                                                const svg = encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='600' height='420'><rect width='100%' height='100%' fill='#0b2b1a'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#7fd08a' font-family='sans-serif' font-size='24'>Image unavailable</text></svg>`);
-                                                e.target.src = `data:image/svg+xml;charset=utf-8,${svg}`;
-                                            }}
-                                        />
-                                    </div>
-                                    <div className="plant-card-info">
-                                        <span className="plant-card-cat">{plant.category}</span>
-                                        <h3 className="plant-card-title">{plant.name}</h3>
-                                        <p className="plant-card-science">{plant.scientificName}</p>
-                                        <div className="plant-card-bottom">
-                                            <span className="plant-card-price">{formatRupee(plant.price)}</span>
-                                            <button
-                                                className="plant-card-btn"
-                                                title="Add to Cart"
-                                                onClick={() => handleAddToCart(plant)}
-                                            >+</button>
-                                        </div>
-                                    </div>
-                                </div>
+                            {Array.from({ length: 8 }).map((_, i) => (
+                                <PlantCardSkeleton key={i} />
                             ))}
                         </div>
+                    ) : filtered.length === 0 ? (
+                        <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.6)', padding: '80px', fontFamily: 'var(--font-sans)' }}>
+                            <div style={{ fontSize: 48, marginBottom: 12 }}>🌱</div>
+                            No plants match your search.
+                        </div>
+                    ) : (
+                        <motion.div
+                            className="plant-grid"
+                            variants={staggerContainer(0.07)}
+                            initial="hidden"
+                            animate="show"
+                            key={activeTab + searchQuery}
+                        >
+                            {filtered.map((plant) => (
+                                <motion.div key={plant._id} variants={staggerItem}>
+                                    <TiltCard className="plant-card" max={9}>
+                                        <div className="plant-card-visual" style={{ padding: 0, overflow: 'hidden' }}>
+                                            <img
+                                                src={plant.imageUrl && plant.imageUrl.startsWith('/') ? `${API}${plant.imageUrl}` : (plant.imageUrl || '')}
+                                                alt={plant.name}
+                                                loading="lazy"
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover', backgroundColor: '#0b2b1a', transition: 'transform 0.6s ease' }}
+                                                onError={(e) => {
+                                                    e.target.onerror = null;
+                                                    console.warn('Image load failed, attempting fallback for', e.target.src);
+                                                    try {
+                                                        const parts = (plant.imageUrl || e.target.src || '').split('/');
+                                                        const file = parts[parts.length - 1];
+                                                        if (file) {
+                                                            const fallback = `${API}/uploads/plants/${file}`;
+                                                            if (e.target.src !== fallback) {
+                                                                e.target.src = fallback;
+                                                                return;
+                                                            }
+                                                        }
+                                                    } catch (err) { /* ignore */ }
+
+                                                    const svg = encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='600' height='420'><rect width='100%' height='100%' fill='#0b2b1a'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#7fd08a' font-family='sans-serif' font-size='24'>Image unavailable</text></svg>`);
+                                                    e.target.src = `data:image/svg+xml;charset=utf-8,${svg}`;
+                                                }}
+                                            />
+                                        </div>
+                                        <div className="plant-card-info">
+                                            <span className="plant-card-cat">{plant.category}</span>
+                                            <h3 className="plant-card-title">{plant.name}</h3>
+                                            <p className="plant-card-science">{plant.scientificName}</p>
+                                            <div className="plant-card-bottom">
+                                                <span className="plant-card-price">{formatRupee(plant.price)}</span>
+                                                <motion.button
+                                                    className="plant-card-btn"
+                                                    title="Add to Cart"
+                                                    onClick={() => handleAddToCart(plant)}
+                                                    whileTap={{ scale: 0.85 }}
+                                                    whileHover={{ scale: 1.12, rotate: 90 }}
+                                                    transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                                                >+</motion.button>
+                                            </div>
+                                        </div>
+                                    </TiltCard>
+                                </motion.div>
+                            ))}
+                        </motion.div>
                     )}
                 </div>
             </section>
 
-            <div className={`toast ${toast.show ? 'show' : ''}`} style={{
-                background: toast.success
-                    ? 'linear-gradient(135deg, var(--primary) 0%, #16402e 100%)'
-                    : 'linear-gradient(135deg, #3b1414 0%, #1e0a0a 100%)',
-                borderColor: toast.success ? 'var(--accent)' : 'rgba(239,68,68,0.4)',
-            }}>
-                {toast.msg}
-            </div>
+            <Toast show={toast.show} message={toast.msg} success={toast.success} />
         </>
     );
 }

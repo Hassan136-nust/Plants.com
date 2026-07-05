@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import { useAuth } from '../context/AuthContext';
 import API_URL from '../config';
 
@@ -41,8 +42,12 @@ export default function AuthModal({ onClose, onSuccess, actionLabel = 'continue'
 
     return (
         /* Backdrop */
-        <div
+        <motion.div
             onClick={onClose}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
             style={{
                 position: 'fixed', inset: 0, zIndex: 11001,
                 background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)',
@@ -51,8 +56,12 @@ export default function AuthModal({ onClose, onSuccess, actionLabel = 'continue'
             }}
         >
             {/* Modal card */}
-            <div
+            <motion.div
                 onClick={e => e.stopPropagation()}
+                initial={{ opacity: 0, scale: 0.9, y: 24, filter: 'blur(6px)' }}
+                animate={{ opacity: 1, scale: 1, y: 0, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, scale: 0.92, y: 16, filter: 'blur(4px)' }}
+                transition={{ type: 'spring', stiffness: 260, damping: 24 }}
                 style={{
                     width: '100%', maxWidth: '440px',
                     background: 'linear-gradient(145deg, #0f3322 0%, #081d14 100%)',
@@ -111,16 +120,22 @@ export default function AuthModal({ onClose, onSuccess, actionLabel = 'continue'
                             key={t}
                             onClick={() => { setTab(t); setError(''); }}
                             style={{
-                                flex: 1, padding: '10px', borderRadius: '50px', border: 'none',
+                                position: 'relative', flex: 1, padding: '10px', borderRadius: '50px', border: 'none',
                                 cursor: 'pointer', fontFamily: 'var(--font-sans)',
                                 fontSize: '13px', fontWeight: '700',
                                 textTransform: 'capitalize', letterSpacing: '0.5px',
-                                transition: 'all 0.25s ease',
-                                background: tab === t ? '#4ade80' : 'transparent',
+                                transition: 'color 0.25s ease', background: 'transparent',
                                 color: tab === t ? '#081d14' : 'rgba(255,255,255,0.5)',
                             }}
                         >
-                            {t === 'login' ? 'Sign In' : 'Register'}
+                            {tab === t && (
+                                <motion.span
+                                    layoutId="auth-tab-pill"
+                                    style={{ position: 'absolute', inset: 0, borderRadius: 50, background: '#4ade80', zIndex: 0 }}
+                                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                                />
+                            )}
+                            <span style={{ position: 'relative', zIndex: 1 }}>{t === 'login' ? 'Sign In' : 'Register'}</span>
                         </button>
                     ))}
                 </div>
@@ -221,7 +236,7 @@ export default function AuthModal({ onClose, onSuccess, actionLabel = 'continue'
                         {tab === 'login' ? 'Register' : 'Sign In'}
                     </span>
                 </p>
-            </div>
-        </div>
+            </motion.div>
+        </motion.div>
     );
 }

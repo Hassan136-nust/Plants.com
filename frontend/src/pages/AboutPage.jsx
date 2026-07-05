@@ -1,6 +1,9 @@
 import React from 'react';
+import { motion } from 'motion/react';
 import { LeafCheckIcon, EcoGlobalIcon, AwardCareIcon, ServiceConsultationIcon, ServiceLandscapeIcon, ServiceWaterIcon, DirectionArrow } from '../data/constants';
 import { Link } from 'react-router-dom';
+import Reveal, { staggerContainer, staggerItem } from '../components/motion/Reveal';
+import TiltCard from '../components/motion/TiltCard';
 
 export default function AboutPage() {
     return (
@@ -8,11 +11,13 @@ export default function AboutPage() {
             {/* PAGE HERO */}
             <section style={{ paddingTop: '160px', paddingBottom: '60px', textAlign: 'center' }}>
                 <div className="container">
-                    <div className="section-eyebrow">Our Story</div>
-                    <h1 className="section-title"><em>About</em> Zia Nursery Farm</h1>
-                    <p className="section-desc" style={{ maxWidth: '620px', margin: '16px auto 0' }}>
-                        A family-run nursery born from a deep love for the natural world. We've been bringing nature closer to homes since 2010.
-                    </p>
+                    <Reveal>
+                        <div className="section-eyebrow">Our Story</div>
+                        <h1 className="section-title"><em>About</em> Zia Nursery Farm</h1>
+                        <p className="section-desc" style={{ maxWidth: '620px', margin: '16px auto 0' }}>
+                            A family-run nursery born from a deep love for the natural world. We've been bringing nature closer to homes since 2010.
+                        </p>
+                    </Reveal>
                 </div>
             </section>
 
@@ -21,7 +26,7 @@ export default function AboutPage() {
                 <div className="about-bg-accent"></div>
                 <div className="container">
                     <div className="about-grid">
-                        <div className="about-visual">
+                        <Reveal direction="right" className="about-visual">
                             <div className="about-img-frame">
                                 <div className="about-img-inner">
                                     <img src="/plants.png" alt="Zia Nursery lush garden" className="about-img" />
@@ -32,8 +37,8 @@ export default function AboutPage() {
                                     <span className="badge-text">Years Growing</span>
                                 </div>
                             </div>
-                        </div>
-                        <div className="about-content">
+                        </Reveal>
+                        <Reveal direction="left" delay={0.1} className="about-content">
                             <h2 className="section-title">A Passion Rooted<br /><em>in Nature</em></h2>
                             <p className="about-text">
                                 Founded in 2010, Zia Nursery Farm was born from a deep love for the natural world. We believe every home deserves the breath of life that only plants can bring — the quiet rustle of leaves, the vibrant palette of blooms, and the calming presence of greenery.
@@ -58,7 +63,7 @@ export default function AboutPage() {
                                     <div><h4>Expert Guidance</h4><p>Certified horticulturists on staff helping you with plant care plans.</p></div>
                                 </div>
                             </div>
-                        </div>
+                        </Reveal>
                     </div>
                 </div>
             </section>
@@ -66,51 +71,69 @@ export default function AboutPage() {
             {/* STATS ROW */}
             <section style={{ padding: '80px 0', background: 'rgba(8,29,20,0.6)' }}>
                 <div className="container">
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '40px', textAlign: 'center' }}>
+                    <motion.div
+                        style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '40px', textAlign: 'center' }}
+                        variants={staggerContainer(0.12)}
+                        initial="hidden"
+                        whileInView="show"
+                        viewport={{ once: true, amount: 0.4 }}
+                    >
                         {[
                             { num: '500+', label: 'Plant Species' },
                             { num: '15K+', label: 'Happy Customers' },
                             { num: '5 Acres', label: 'Farm Size' },
                             { num: '14+', label: 'Years of Excellence' },
                         ].map((s) => (
-                            <div key={s.label}>
+                            <motion.div key={s.label} variants={staggerItem}>
                                 <div className="stat-num" style={{ fontSize: '40px' }}>{s.num}</div>
                                 <div className="stat-label" style={{ marginTop: '8px' }}>{s.label}</div>
-                            </div>
+                            </motion.div>
                         ))}
-                    </div>
+                    </motion.div>
                 </div>
             </section>
 
             {/* SERVICES SECTION */}
             <section className="services">
                 <div className="container">
-                    <div className="section-header">
+                    <Reveal className="section-header">
                         <div className="section-eyebrow">What We Offer</div>
                         <h2 className="section-title">Our <em>Services</em></h2>
                         <p className="section-desc">From consultation to installation — we cover every aspect of your green journey.</p>
-                    </div>
-                    <div className="services-grid">
-                        <div className="service-card">
-                            <div className="service-icon-wrap"><ServiceConsultationIcon /></div>
-                            <h3>Plant Consultation</h3>
-                            <p>One-on-one expert guidance to find the perfect plants for your space, lifestyle, and climate.</p>
-                            <DirectionArrow />
-                        </div>
-                        <div className="service-card featured-service">
-                            <div className="service-badge">Most Popular</div>
-                            <div className="service-icon-wrap"><ServiceLandscapeIcon /></div>
-                            <h3>Garden Installation</h3>
-                            <p>Professional landscape design and full garden installation services for homes and commercial spaces.</p>
-                            <DirectionArrow />
-                        </div>
-                        <div className="service-card">
-                            <div className="service-icon-wrap"><ServiceWaterIcon /></div>
-                            <h3>Plant Care Plans</h3>
-                            <p>Scheduled watering, fertilization, pruning, and ongoing plant health maintenance packages.</p>
-                            <DirectionArrow />
-                        </div>
-                    </div>
+                    </Reveal>
+                    <motion.div
+                        className="services-grid"
+                        variants={staggerContainer(0.16)}
+                        initial="hidden"
+                        whileInView="show"
+                        viewport={{ once: true, amount: 0.2 }}
+                    >
+                        <motion.div variants={staggerItem}>
+                            <TiltCard className="service-card" max={8}>
+                                <div className="service-icon-wrap"><ServiceConsultationIcon /></div>
+                                <h3>Plant Consultation</h3>
+                                <p>One-on-one expert guidance to find the perfect plants for your space, lifestyle, and climate.</p>
+                                <DirectionArrow />
+                            </TiltCard>
+                        </motion.div>
+                        <motion.div variants={staggerItem}>
+                            <TiltCard className="service-card featured-service" max={8}>
+                                <div className="service-badge">Most Popular</div>
+                                <div className="service-icon-wrap"><ServiceLandscapeIcon /></div>
+                                <h3>Garden Installation</h3>
+                                <p>Professional landscape design and full garden installation services for homes and commercial spaces.</p>
+                                <DirectionArrow />
+                            </TiltCard>
+                        </motion.div>
+                        <motion.div variants={staggerItem}>
+                            <TiltCard className="service-card" max={8}>
+                                <div className="service-icon-wrap"><ServiceWaterIcon /></div>
+                                <h3>Plant Care Plans</h3>
+                                <p>Scheduled watering, fertilization, pruning, and ongoing plant health maintenance packages.</p>
+                                <DirectionArrow />
+                            </TiltCard>
+                        </motion.div>
+                    </motion.div>
                 </div>
             </section>
 

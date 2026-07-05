@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import { ContactLocationIcon, ContactPhoneIcon, ContactClockIcon, ContactMailIcon } from '../data/constants';
 import API_URL from '../config';
+import Reveal, { staggerContainer, staggerItem } from '../components/motion/Reveal';
+import TiltCard from '../components/motion/TiltCard';
 
 export default function ContactPage() {
     const [toast, setToast] = useState({ show: false, msg: '' });
@@ -90,11 +93,13 @@ export default function ContactPage() {
             {/* PAGE HERO */}
             <section style={{ paddingTop: '160px', paddingBottom: '60px', textAlign: 'center' }}>
                 <div className="container">
-                    <div className="section-eyebrow">Get In Touch</div>
-                    <h1 className="section-title">Visit <em>Us</em></h1>
-                    <p className="section-desc" style={{ maxWidth: '560px', margin: '16px auto 0' }}>
-                        We'd love to hear from you. Visit our farm, call us, or drop a message below.
-                    </p>
+                    <Reveal>
+                        <div className="section-eyebrow">Get In Touch</div>
+                        <h1 className="section-title">Visit <em>Us</em></h1>
+                        <p className="section-desc" style={{ maxWidth: '560px', margin: '16px auto 0' }}>
+                            We'd love to hear from you. Visit our farm, call us, or drop a message below.
+                        </p>
+                    </Reveal>
                 </div>
             </section>
 
@@ -102,18 +107,29 @@ export default function ContactPage() {
             <section className="contact" style={{ paddingTop: '20px' }}>
                 <div className="container">
                     <div className="contact-grid">
-                        <div className="contact-info">
-                            <div className="contact-card">
+                        <motion.div
+                            className="contact-info"
+                            variants={staggerContainer(0.1)}
+                            initial="hidden"
+                            whileInView="show"
+                            viewport={{ once: true, amount: 0.2 }}
+                        >
+                            <motion.div variants={staggerItem}>
+                            <TiltCard className="contact-card" max={7}>
                                 <ContactLocationIcon />
                                 <h4>Our Location</h4>
                                 <p>Gehlan Chak no. 9,<br />Pattoki District Kasur , Pakistan</p>
-                            </div>
-                            <div className="contact-card">
+                            </TiltCard>
+                            </motion.div>
+                            <motion.div variants={staggerItem}>
+                            <TiltCard className="contact-card" max={7}>
                                 <ContactPhoneIcon />
                                 <h4>Phone</h4>
                                 <p>+92 328 908 2754<br />+92 328 908 2754</p>
-                            </div>
-                            <div className="contact-card" onClick={handleWhatsApp} style={{ cursor: 'pointer' }}>
+                            </TiltCard>
+                            </motion.div>
+                            <motion.div variants={staggerItem}>
+                            <TiltCard className="contact-card" max={7} onClick={handleWhatsApp} style={{ cursor: 'pointer' }}>
                                 <div style={{
                                     width: '20px',
                                     height: '20px',
@@ -134,13 +150,16 @@ export default function ContactPage() {
                                 </div>
                                 <h4>WhatsApp</h4>
                                 <p style={{ color: '#f9f9f9ff', fontWeight: '600' }}>Click to message us<br />+92 328 908 2754</p>
-                            </div>
-                            <div className="contact-card" onClick={handleEmail} style={{ cursor: 'pointer' }}>
+                            </TiltCard>
+                            </motion.div>
+                            <motion.div variants={staggerItem}>
+                            <TiltCard className="contact-card" max={7} onClick={handleEmail} style={{ cursor: 'pointer' }}>
                                 <ContactMailIcon />
                                 <h4>Email</h4>
                                 <p style={{ color: 'var(--accent)', fontWeight: '600' }}>Click to send email<br />pyrohassan786@gmail.com</p>
-                            </div>
-                        </div>
+                            </TiltCard>
+                            </motion.div>
+                        </motion.div>
 
                         <div className="contact-form-wrap">
                             <form className="contact-form" onSubmit={handleContact}>

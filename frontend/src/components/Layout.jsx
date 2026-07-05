@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { AnimatePresence } from 'motion/react';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import CartDrawer from './CartDrawer';
 import AuthModal from './AuthModal';
+import SmoothScroll from './motion/SmoothScroll';
 import { useAuth } from '../context/AuthContext';
 
 export default function Layout({ children }) {
@@ -21,7 +23,7 @@ export default function Layout({ children }) {
     }, []);
 
     return (
-        <>
+        <SmoothScroll>
             {/* Fixed background */}
             <div className="app-root-bg">
                 <div className="bg-image-layer"></div>
@@ -46,12 +48,15 @@ export default function Layout({ children }) {
 
             <CartDrawer />
 
-            {showAuthModal && (
-                <AuthModal
-                    actionLabel="continue"
-                    onClose={closeAuth}
-                />
-            )}
-        </>
+            <AnimatePresence>
+                {showAuthModal && (
+                    <AuthModal
+                        key="auth-modal"
+                        actionLabel="continue"
+                        onClose={closeAuth}
+                    />
+                )}
+            </AnimatePresence>
+        </SmoothScroll>
     );
 }

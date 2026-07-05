@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { parsePrice, formatRupee } from '../utils/price';
@@ -16,6 +17,7 @@ export default function CheckoutPage() {
     const [receipt, setReceipt] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [success, setSuccess] = useState(false);
 
     const advanceAmountNum = subtotal * 0.70;
     const deliveryAmountNum = subtotal * 0.30;
@@ -53,14 +55,67 @@ export default function CheckoutPage() {
 
             // Success!
             clearCart();
-            alert('Order placed successfully! We will verify your receipt shortly.');
-            navigate('/');
+            setSuccess(true);
         } catch (err) {
             setError(err.message);
         } finally {
             setLoading(false);
         }
     };
+
+    if (success) {
+        return (
+            <div style={{
+                position: 'fixed', inset: 0, zIndex: 11001, display: 'flex',
+                alignItems: 'center', justifyContent: 'center', padding: '20px',
+                background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(10px)',
+            }}>
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.85, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+                    style={{
+                        width: '100%', maxWidth: '460px', textAlign: 'center',
+                        background: 'linear-gradient(145deg, #0f3322 0%, #081d14 100%)',
+                        border: '1px solid rgba(74,222,128,0.3)', borderRadius: '24px',
+                        padding: '48px 40px', boxShadow: '0 40px 90px rgba(0,0,0,0.7), 0 0 70px rgba(74,222,128,0.12)',
+                    }}
+                >
+                    <motion.div
+                        initial={{ scale: 0, rotate: -30 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{ type: 'spring', stiffness: 200, damping: 12, delay: 0.15 }}
+                        style={{
+                            width: 84, height: 84, margin: '0 auto 24px', borderRadius: '50%',
+                            background: 'rgba(74,222,128,0.15)', border: '2px solid rgba(74,222,128,0.5)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}
+                    >
+                        <motion.svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <motion.path
+                                d="M20 6L9 17l-5-5"
+                                initial={{ pathLength: 0 }}
+                                animate={{ pathLength: 1 }}
+                                transition={{ duration: 0.5, delay: 0.4, ease: 'easeInOut' }}
+                            />
+                        </motion.svg>
+                    </motion.div>
+                    <h2 style={{ fontFamily: 'var(--font-serif)', color: '#fff', fontSize: '28px', marginBottom: '12px' }}>Order Placed! 🌿</h2>
+                    <p style={{ color: 'rgba(255,255,255,0.6)', fontFamily: 'var(--font-sans)', fontSize: '15px', lineHeight: 1.7, marginBottom: '32px' }}>
+                        Thank you! We've received your order and will verify your payment receipt shortly. You can track its status any time.
+                    </p>
+                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                        <button onClick={() => navigate('/my-orders')} style={{ background: '#4ade80', color: '#081d14', border: 'none', padding: '13px 26px', borderRadius: '50px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', boxShadow: '0 8px 24px rgba(74,222,128,0.3)' }}>
+                            View My Orders
+                        </button>
+                        <button onClick={() => navigate('/plants')} style={{ background: 'transparent', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', padding: '13px 26px', borderRadius: '50px', fontWeight: 600, cursor: 'pointer', fontSize: '14px' }}>
+                            Keep Shopping
+                        </button>
+                    </div>
+                </motion.div>
+            </div>
+        );
+    }
 
     if (cart.length === 0) {
         return (

@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../config';
+import { OrderSkeleton } from '../components/motion/Skeleton';
+import { staggerContainer, staggerItem } from '../components/motion/Reveal';
 
 const statusConfig = {
     pending: { label: 'Pending Review', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', icon: '⏳' },
@@ -53,10 +56,11 @@ export default function MyOrdersPage() {
 
     if (loading) {
         return (
-            <div style={{ padding: '140px 24px', textAlign: 'center' }}>
-                <div style={{ width: '40px', height: '40px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#4ade80', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
-                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-            </div>
+            <section style={{ padding: '120px 24px 80px', minHeight: '100vh' }}>
+                <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {Array.from({ length: 3 }).map((_, i) => <OrderSkeleton key={i} />)}
+                </div>
+            </section>
         );
     }
 
@@ -94,7 +98,12 @@ export default function MyOrdersPage() {
                         </button>
                     </div>
                 ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <motion.div
+                        style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+                        variants={staggerContainer(0.08)}
+                        initial="hidden"
+                        animate="show"
+                    >
                         {orders.map(order => {
                             const status = statusConfig[order.status] || statusConfig.pending;
                             const isExpanded = expandedId === order._id;
@@ -109,7 +118,7 @@ export default function MyOrdersPage() {
                             })();
 
                             return (
-                                <div key={order._id} style={{
+                                <motion.div key={order._id} variants={staggerItem} style={{
                                     background: 'rgba(4,12,8,0.82)',
                                     border: '1px solid rgba(255,255,255,0.07)',
                                     borderRadius: '16px',
@@ -166,7 +175,16 @@ export default function MyOrdersPage() {
                                     </div>
 
                                     {/* Expandable details */}
+                                    <AnimatePresence initial={false}>
                                     {isExpanded && (
+                                        <motion.div
+                                            key="details"
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: 'auto', opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                                            style={{ overflow: 'hidden' }}
+                                        >
                                         <div style={{ padding: '24px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '40px', flexWrap: 'wrap' }}>
                                             {/* Items */}
                                             <div style={{ flex: '1 1 240px' }}>
@@ -240,11 +258,13 @@ export default function MyOrdersPage() {
                                                 })}
                                             </div>
                                         </div>
+                                        </motion.div>
                                     )}
-                                </div>
+                                    </AnimatePresence>
+                                </motion.div>
                             );
                         })}
-                    </div>
+                    </motion.div>
                 )}
             </div>
         </section>

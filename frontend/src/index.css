@@ -2200,3 +2200,107 @@ input[type="file"]::file-selector-button:hover {
         font-size: 14px;
     }
 }
+
+/* ============================================================
+   PREMIUM MOTION LAYER  (skeletons · smooth-scroll · glow)
+   ============================================================ */
+
+/* Lenis smooth scroll — disable native smooth so Lenis owns it */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* Shimmer skeleton loaders */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(210, 231, 203, 0.10) 40%,
+      rgba(210, 231, 203, 0.16) 50%,
+      rgba(210, 231, 203, 0.10) 60%,
+      transparent 100%);
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+/* Light skeletons (on white carousel cards) */
+.plant-card .skeleton {
+  background: rgba(0, 0, 0, 0.05);
+}
+.carousel-skeleton .skeleton {
+  background: #eef1ee;
+}
+
+/* Premium button shine sweep for primary CTAs */
+.btn-primary {
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+.btn-primary:hover::after {
+  left: 130%;
+}
+
+/* Floating micro-interaction for cards that opt in */
+.hover-glow {
+  transition: box-shadow 0.4s ease, transform 0.4s ease;
+}
+.hover-glow:hover {
+  box-shadow: 0 25px 55px rgba(0, 0, 0, 0.5), 0 0 30px rgba(74, 222, 128, 0.18);
+}
+
+/* Animated gradient underline for section eyebrows */
+.section-eyebrow {
+  position: relative;
+}
+
+/* Respect reduced-motion everywhere: kill transforms, shimmer, sweeps */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .skeleton::after {
+    display: none;
+  }
+  .particle {
+    display: none;
+  }
+}
