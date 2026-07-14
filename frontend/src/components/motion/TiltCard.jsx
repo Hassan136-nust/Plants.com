@@ -27,6 +27,11 @@ export default function TiltCard({
 
     const glareX = useTransform(px, [0, 1], ['0%', '100%']);
     const glareY = useTransform(py, [0, 1], ['0%', '100%']);
+    const glareBg = useTransform(
+        [glareX, glareY],
+        ([gx, gy]) =>
+            `radial-gradient(circle at ${gx} ${gy}, rgba(255,255,255,0.18), transparent 45%)`
+    );
 
     if (reduced || touch) {
         return (
@@ -76,11 +81,7 @@ export default function TiltCard({
                         inset: 0,
                         borderRadius: 'inherit',
                         pointerEvents: 'none',
-                        background: useTransform(
-                            [glareX, glareY],
-                            ([gx, gy]) =>
-                                `radial-gradient(circle at ${gx} ${gy}, rgba(255,255,255,0.18), transparent 45%)`
-                        ),
+                        background: glareBg,
                         mixBlendMode: 'soft-light',
                     }}
                 />
